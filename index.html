@@ -1,0 +1,2059 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="app-version" content="7.2">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f97316">
+<!-- Build v6.1: localização das compras com GPS + seletor de mapa integrado + fallback por estabelecimento; backup/restauração local. -->
+<title>Minhas Finanças • v7.2</title>
+<style>
+:root{
+  --primary:#f97316; --primary2:#ea580c; --bg:#f5f6f8; --card:#fff;
+  --text:#1f2937; --muted:#6b7280; --line:#e5e7eb; --green:#16a34a;
+  --red:#dc2626; --blue:#2563eb; --shadow:0 4px 18px rgba(0,0,0,.07);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:var(--text);padding-bottom:82px}
+button,input,select{font:inherit}
+button{cursor:pointer}
+.app{max-width:760px;margin:auto}
+header{background:linear-gradient(135deg,var(--primary),var(--primary2));color:white;padding:22px 18px 20px;border-radius:0 0 24px 24px}
+.top{display:flex;justify-content:space-between;align-items:center}
+h1{font-size:25px;margin:0 0 4px}
+.sub{opacity:.9;font-size:13px}
+.month-row{display:flex;gap:8px;margin-top:18px}
+.month-row select{flex:1;border:0;border-radius:12px;padding:11px;background:rgba(255,255,255,.18);color:#fff;outline:none}
+.month-row option{color:#111}
+.content{padding:14px}
+.summary{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.card{background:var(--card);border-radius:17px;padding:15px;box-shadow:var(--shadow)}
+.summary .card{min-height:90px}
+.label{font-size:12px;color:var(--muted);margin-bottom:7px}
+.value{font-size:22px;font-weight:800}
+.orange{color:var(--primary2)} .green{color:var(--green)} .red{color:var(--red)}
+.pay-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+.pay-card{position:relative;overflow:hidden}
+.pay-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--primary)}
+.pay-card:nth-child(2)::before{background:var(--blue)}
+.section-title{display:flex;justify-content:space-between;align-items:center;margin:18px 2px 9px}
+.section-title h2{font-size:17px;margin:0}
+.small{font-size:12px;color:var(--muted)}
+.add{width:100%;border:0;background:var(--primary);color:#fff;padding:11px 13px;border-radius:12px;font-weight:800;font-size:14px;box-shadow:0 4px 11px rgba(249,115,22,.20);min-height:44px}
+.add:active{transform:scale(.99)}
+.list{display:flex;flex-direction:column;gap:9px}
+.item{background:#fff;border-radius:15px;padding:13px;box-shadow:var(--shadow);display:flex;align-items:center;gap:11px;border-left:6px solid #9ca3af}
+.item.due10{border-left-color:#f97316;background:#fffaf5}
+.item.due25{border-left-color:#2563eb;background:#f7f9ff}
+.item.dueOther{border-left-color:#8b5cf6;background:#fbf9ff}
+.item.isPaid{border-left-color:#16a34a;background:#f0fdf4}
+.whatsapp{width:100%;border:0;background:#16a34a;color:#fff;padding:10px 13px;border-radius:12px;font-weight:800;font-size:13px;margin-top:7px;box-shadow:0 4px 11px rgba(22,163,74,.16);min-height:42px}
+.whatsapp:active{transform:scale(.99)}
+.pdfbtn{width:100%;border:0;background:#374151;color:#fff;padding:10px 13px;border-radius:12px;font-weight:800;font-size:13px;margin-top:7px;min-height:42px}
+.cardbtn{width:100%;border:0;background:#7c3aed;color:#fff;padding:10px 13px;border-radius:12px;font-weight:800;font-size:13px;margin-top:7px;min-height:42px}
+.card-summary{display:grid;grid-template-columns:1fr;gap:10px;margin-top:10px}
+.due-groups{display:flex;flex-direction:column;gap:10px;margin-top:12px}.due-group-toggle{display:flex;align-items:center;gap:8px;width:100%;border:1px solid #fed7aa;background:#fff7ed;color:#9a3412;border-radius:14px;padding:15px;font-weight:850;text-align:left;font-size:16px}.due-group-toggle span{margin-left:auto;background:#ffedd5;border-radius:20px;padding:3px 9px;font-size:12px}.due-group-toggle b{font-size:20px}.due-group-toggle.active{background:#ffedd5}.due-group-panel{padding:2px 0 8px}.due-cards-title{font-weight:850;font-size:14px;color:#5b21b6;margin:14px 2px 4px}.due-group-panel[hidden]{display:none!important}
+.card-chip{background:#f5f3ff;border:1px solid #ddd6fe;border-radius:15px;padding:13px}
+.card-chip .name{font-weight:800;color:#5b21b6}
+.card-chip .amount{font-size:20px;font-weight:900;margin-top:5px}
+.cat-row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid #eee;font-size:13px}
+.cat-row:last-child{border-bottom:0}
+.card-entry{border-left-color:#7c3aed!important;background:#faf8ff!important}
+
+@media print{
+  body{background:#fff;padding:0}
+  header,.bottom,.add,.whatsapp,.pdfbtn,.search,.tabs{display:none!important}
+  .content{padding:10px}
+  .summary,.pay-grid{display:grid}
+  .card,.item{box-shadow:none;border:1px solid #ddd}
+  .item{break-inside:avoid}
+  .actions{display:none}
+  .section-title{margin-top:14px}
+  .print-title{display:block!important}
+}
+.print-title{display:none}
+
+.icon{width:43px;height:43px;border-radius:13px;background:#fff2e8;display:grid;place-items:center;font-size:20px;flex:0 0 auto}
+.item-main{min-width:0;flex:1}
+.item-title{font-weight:750;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item-meta{font-size:12px;color:var(--muted);margin-top:3px}
+.item-right{text-align:right}
+.item-value{font-weight:800}
+.badge{display:inline-block;padding:4px 7px;border-radius:8px;font-size:10px;font-weight:700;margin-top:4px}
+.badge.pending{background:#fff7ed;color:#c2410c}
+.badge.paid{background:#f0fdf4;color:#15803d}
+.badge.overdue{background:#fef2f2;color:#b91c1c}
+.actions{display:flex;gap:5px;margin-top:7px;justify-content:flex-end}
+.actions button{border:0;background:#f3f4f6;border-radius:8px;padding:5px 8px;font-size:11px}
+.empty{text-align:center;color:var(--muted);padding:30px 10px}
+.bottom{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);z-index:20}
+.bottom-inner{max-width:760px;margin:auto;display:grid;grid-template-columns:1fr 1fr 1fr}
+.navbtn{border:0;background:none;padding:11px 4px 10px;color:var(--muted);font-size:11px}
+.navbtn span{display:block;font-size:20px;margin-bottom:2px}
+.navbtn.active{color:var(--primary2);font-weight:800}
+.modal-back{display:none;position:fixed;inset:0;background:rgba(0,0,0,.48);z-index:30;align-items:flex-end;justify-content:center}
+.modal-back.show{display:flex}
+.modal{background:#fff;width:100%;max-width:760px;border-radius:24px 24px 0 0;padding:20px 16px 26px;max-height:92vh;overflow:auto}
+.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:13px}
+.modal-head h2{margin:0;font-size:19px}
+.close{border:0;background:#f3f4f6;border-radius:50%;width:34px;height:34px}
+.form{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.field{display:flex;flex-direction:column;gap:5px}
+.field.full{grid-column:1/-1}
+.field label{font-size:12px;font-weight:700;color:#4b5563}
+.field input,.field select{border:1px solid #d9dde3;border-radius:11px;padding:12px;background:#fff;outline:none}
+.fixed-box{grid-column:1/-1;background:#fff7ed;border:1px solid #fed7aa;border-radius:13px;padding:12px;display:flex;align-items:center;gap:10px}
+.fixed-box input{width:21px;height:21px;accent-color:var(--primary)}
+.fixed-box label{font-weight:800;color:#9a3412;font-size:13px}
+.fixed-help{font-size:11px;color:#92400e;margin-top:3px}
+.field input:focus,.field select:focus{border-color:var(--primary)}
+
+.location-picker-modal{position:fixed;inset:0;background:rgba(15,23,42,.58);z-index:9999;display:flex;align-items:flex-end;justify-content:center;padding:0}
+.location-picker-sheet{width:min(760px,100%);background:#fff;border-radius:20px 20px 0 0;padding:14px;box-shadow:0 -8px 30px rgba(0,0,0,.18);max-height:92vh;overflow:auto}
+.location-picker-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}.location-picker-head strong{font-size:18px}.location-picker-sub{font-size:12px;color:#64748b;margin-top:2px}.location-picker-close{border:0;background:#f1f5f9;border-radius:10px;width:42px;height:42px;font-size:18px}
+.location-picker-search{display:grid;grid-template-columns:1fr auto;gap:8px}.location-picker-search input{width:100%;border:1px solid #d1d5db;border-radius:11px;padding:11px}.location-picker-search button{border:0;background:#2563eb;color:#fff;border-radius:11px;padding:0 14px;font-weight:800}
+.map-search-results{display:flex;gap:6px;overflow:auto;margin-top:8px}.map-result{border:1px solid #dbeafe;background:#eff6ff;color:#1e3a8a;border-radius:10px;padding:8px 10px;font-size:11px;white-space:nowrap;max-width:90%}.map-result small{display:block;color:#64748b;margin-top:2px}
+.location-picker-map{height:48vh;min-height:280px;margin-top:9px;border-radius:14px;overflow:hidden;border:1px solid #e5e7eb;background:#e5e7eb}.location-picker-selected{font-size:12px;color:#334155;padding:9px 2px;min-height:36px}.location-picker-actions{display:grid;grid-template-columns:1fr 1.5fr;gap:8px}.location-picker-actions button{min-height:44px;border:0;border-radius:11px;font-weight:800}.location-picker-cancel{background:#f1f5f9;color:#334155}.location-picker-confirm{background:#16a34a;color:#fff}
+@media(max-width:520px){.location-actions{grid-template-columns:1fr 1fr}.location-picker-search{grid-template-columns:1fr}.location-picker-search button{min-height:44px}.location-picker-actions{grid-template-columns:1fr 1fr}}
+.location-box{grid-column:1/-1;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:13px;padding:12px}
+.location-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.location-title{font-weight:800;color:#166534;font-size:13px}
+.location-help{font-size:11px;color:#166534;margin-top:3px;line-height:1.35}
+.location-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:9px}.location-actions button{width:100%;min-width:0}.location-actions .location-btn,.location-actions .location-map-btn,.location-actions .location-help-btn,.location-actions .location-clear{display:flex;align-items:center;justify-content:center}.location-help-btn{border:0;border-radius:10px;padding:9px 11px;font-weight:800;font-size:12px;cursor:pointer;background:#ede9fe;color:#5b21b6;min-height:40px}.location-map-btn{background:#dbeafe;color:#1d4ed8}.location-clear{min-height:40px}
+.location-btn{border:0;border-radius:10px;padding:9px 11px;font-weight:800;font-size:12px;cursor:pointer;background:#16a34a;color:#fff;min-height:40px}.location-map-btn{border:0;border-radius:10px;padding:9px 11px;font-weight:800;font-size:12px;cursor:pointer;background:#dbeafe;color:#1d4ed8;min-height:40px}
+.location-clear{border:0;border-radius:10px;padding:9px 11px;font-weight:800;font-size:12px;background:#dcfce7;color:#166534}
+.location-status{font-size:11px;color:#166534;margin-top:7px;min-height:15px}
+.location-coords{font-size:10px;color:#64748b;margin-top:3px}
+.location-link{display:inline-block;margin-top:4px;color:#166534;text-decoration:none;font-weight:700}
+
+.form-actions{display:flex;gap:9px;margin-top:16px}
+.form-actions button{flex:1;border:0;padding:13px;border-radius:12px;font-weight:800}
+.cancel{background:#f3f4f6}.save{background:var(--primary);color:#fff}
+.tabs{display:flex;background:#e9ebef;padding:4px;border-radius:12px;margin-bottom:12px}
+.tab{flex:1;border:0;background:transparent;padding:9px;border-radius:9px;font-weight:700;color:var(--muted)}
+.tab.active{background:#fff;color:var(--primary2);box-shadow:0 2px 6px rgba(0,0,0,.07)}
+.search{width:100%;padding:11px;border:1px solid var(--line);border-radius:12px;margin-bottom:10px}
+@media(min-width:600px){
+ body{padding-bottom:20px}.bottom{position:static;border:0;background:transparent;margin:0 auto}.bottom-inner{display:none}
+ header{border-radius:0 0 26px 26px}
+ .modal{border-radius:20px;margin-bottom:5vh}
+ .modal-back{align-items:center}
+}
+
+.card-manager{margin-top:14px;padding:13px;border:1px solid #ddd6fe;background:#faf7ff;border-radius:15px}.card-manager-head{margin-bottom:10px}.card-item-row{background:#fff;border:1px solid #e5e7eb;border-radius:13px;padding:10px;margin:8px 0;display:grid;grid-template-columns:1fr 1fr;gap:8px}.card-item-row .full{grid-column:1/-1}.remove-card-item{grid-column:1/-1;border:0;background:#fee2e2;color:#b91c1c;border-radius:10px;padding:9px;font-weight:700}.add-card-item{width:100%;border:0;background:#ede9fe;color:#6d28d9;padding:9px 11px;border-radius:10px;font-weight:800;font-size:13px}.card-manager-summary{margin-top:10px;padding-top:10px;border-top:1px dashed #c4b5fd}.summary-line{display:flex;justify-content:space-between;font-size:14px;padding-bottom:8px}.cat-row{display:flex;justify-content:space-between;padding:6px 0;font-size:13px}.card-inline-summary{font-size:12px;color:#6d28d9;font-weight:700;margin-top:4px}
+.card-detail{margin-top:12px;padding:14px;border:1px solid #ddd6fe;background:#faf7ff;border-radius:15px}
+.card-detail-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px}
+.card-detail-title{font-weight:900;color:#5b21b6}
+.card-detail-total{font-size:20px;font-weight:900;color:#4c1d95}
+.card-purchase-list{display:flex;flex-direction:column;gap:7px;margin-top:10px}
+.card-purchase{background:#fff;border:1px solid #e5e7eb;border-radius:11px;padding:9px 10px;display:flex;justify-content:space-between;gap:8px;align-items:center}
+.card-purchase-main{min-width:0;flex:1}
+.card-purchase-name{font-weight:750;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card-purchase-meta{font-size:11px;color:#6b7280;margin-top:2px}
+.card-category-total{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #e9e5f5;font-size:12px}
+.card-category-total:last-child{border-bottom:0}
+.card-add-btn{width:100%;border:0;background:#7c3aed;color:#fff;padding:10px;border-radius:11px;font-weight:850;margin-top:10px}
+.card-zero{color:#6b7280;font-size:12px}
+
+.month-nav{display:flex;align-items:center;justify-content:center;gap:8px;width:100%}
+.month-nav select{flex:1;min-width:0}
+.month-arrow{width:42px;height:42px;border:0;border-radius:12px;background:#f3f4f6;color:#111827;font-size:28px;line-height:1;font-weight:700;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.month-arrow:active{transform:scale(.96)}
+.fixed-month-panel{margin-top:9px;padding:10px 12px;border-radius:12px;background:#ecfdf5;border:1px solid #bbf7d0;color:#14532d}.fixed-month-toggle{display:flex;align-items:flex-start;gap:8px;font-size:13px}.fixed-month-toggle input{margin-top:3px;width:18px;height:18px;flex-shrink:0}.fixed-month-toggle small{display:block;font-weight:400;color:#166534;margin-top:3px;line-height:1.35}.fixed-month-panel select{width:100%;margin-top:8px;padding:9px;border:1px solid #86efac;border-radius:9px;background:#fff}.fixed-month-panel select:disabled{opacity:.65}
+
+.backup-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}.backup-btn{border:0;border-radius:12px;padding:11px 12px;font-weight:800;font-size:13px;cursor:pointer;background:#f3f4f6;color:#374151}.backup-btn.restore{background:#eef2ff;color:#3730a3}.backup-help{font-size:11px;color:#6b7280;margin:6px 2px 0;line-height:1.35}@media(max-width:480px){.backup-actions{grid-template-columns:1fr 1fr}.backup-btn{font-size:12px;padding:10px 8px}}
+
+@media(max-width:600px){
+  
+  
+}
+@media(min-width:760px){
+  
+}
+
+@media(max-width:600px){}
+
+.card-installment-box{grid-column:1/-1;background:#f5f3ff;border:1px dashed #c4b5fd;border-radius:10px;padding:9px}
+.card-installment-box label{display:block;font-size:12px;font-weight:800;color:#5b21b6;margin-bottom:5px}
+.card-installment-box select{width:100%;padding:9px;border:1px solid #ddd6fe;border-radius:9px;background:#fff}
+.card-installment-info{grid-column:1/-1;font-size:11px;color:#6b7280}
+
+.list-filters{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0 10px}
+.list-filter{width:100%;padding:10px 11px;border:1px solid #e5e7eb;border-radius:11px;background:#fff;font-size:13px}
+.filter-label{font-size:11px;color:#6b7280;margin:2px 0 4px}
+.purchase-click{cursor:pointer}
+.purchase-click:active{transform:scale(.99)}
+.purchase-detail-back{position:fixed;inset:0;background:rgba(15,23,42,.48);display:none;align-items:flex-end;justify-content:center;z-index:50}
+.purchase-detail-back.show{display:flex}
+.purchase-detail-modal{width:min(560px,100%);background:#fff;border-radius:20px 20px 0 0;padding:18px;max-height:82vh;overflow:auto}
+.purchase-detail-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.purchase-detail-title{font-size:19px;font-weight:850}
+.purchase-detail-close{border:0;background:#f1f5f9;border-radius:10px;padding:8px 11px;font-size:16px}
+.purchase-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:14px}
+.purchase-detail-box{background:#f8fafc;border-radius:12px;padding:11px}
+.purchase-detail-box .label{font-size:11px;color:#64748b}
+.purchase-detail-box .value{font-size:15px;font-weight:800;margin-top:3px}
+.purchase-detail-note{margin-top:12px;padding:11px;background:#f5f3ff;border-radius:12px;color:#5b21b6;font-size:13px}
+@media(max-width:520px){.list-filters{grid-template-columns:1fr}.purchase-detail-grid{grid-template-columns:1fr 1fr}}
+
+
+.location-help-btn{border:0;background:#eef2ff;color:#3730a3;border-radius:10px;padding:9px 11px;font-weight:800}.location-help-panel{margin-top:9px;padding:10px 12px;border-radius:11px;background:#eef2ff;color:#3730a3;font-size:12px;line-height:1.4}
+#receiptBack .modal{max-height:94vh}#receiptReview .form{margin-top:12px}#receiptItemsEditor .card-item-row{margin:0}#receiptItemsEditor .remove-card-item{grid-column:auto;align-self:end;min-height:42px}
+
+/* Modo simplificado ao editar a fatura: mostra somente os gastos do cartão. */
+#form.card-statement-mode .form > .field,
+#form.card-statement-mode .form > .fixed-box,
+#form.card-statement-mode .form > .location-box,
+#form.card-statement-mode .form > #locationHelp { display:none !important; }
+#form.card-statement-mode .form > #cardManager { display:block !important; }
+#form.card-statement-mode .modal > .small { display:none; }
+ .main-action-row{display:grid;grid-template-columns:1.35fr 1fr .72fr;gap:8px;margin:0 0 12px;align-items:stretch}
+.main-action-row button{width:100%;min-width:0;margin:0;padding:10px 5px;min-height:52px;font-size:12px;line-height:1.2;display:flex;align-items:center;justify-content:center;text-align:center;overflow-wrap:anywhere}
+@media(max-width:390px){.main-action-row{grid-template-columns:1.25fr 1fr .68fr;gap:6px}.main-action-row button{font-size:11px;padding:8px 3px}}
+
+</style>
+
+<script>
+/* v5.2 — limpeza de lançamentos antigos de R$0,01 */
+(function(){
+  try{
+    const key='minhas_financas_v1';
+    const raw=localStorage.getItem(key);
+    if(!raw) return;
+    const data=JSON.parse(raw);
+    if(!Array.isArray(data)) return;
+
+    const months=new Set(['2026-10','2026-11','2026-12']);
+    const unwantedAccounts=new Set(['rico','mercado pago','mp']);
+    const unwantedNames=new Set(['cartão rico','cartao rico','cartão mp','cartao mp']);
+
+    const filtered=data.filter(e=>{
+      const desc=String(e.description||'').trim().toLowerCase();
+      const account=String(e.account||e.card||'').trim().toLowerCase();
+      const due=String(e.due||'');
+      const month=String(e.month||due.slice(0,7));
+      const value=Number(e.value);
+      const isUnwantedName=unwantedNames.has(desc) || 
+        (desc.includes('cartão rico') || desc.includes('cartao rico') ||
+         desc.includes('cartão mp') || desc.includes('cartao mp'));
+      const isUnwantedAccount=unwantedAccounts.has(account);
+      return !(months.has(month) && value===0.01 && (isUnwantedName || isUnwantedAccount));
+    });
+
+    if(filtered.length!==data.length) localStorage.setItem(key,JSON.stringify(filtered));
+  }catch(e){}
+})();
+
+</script>
+
+<script>
+/* v5.2 — remove todos os lançamentos de R$0,01 de 09/2026 a 12/2050 */
+(function(){
+  try{
+    const key='minhas_financas_v1';
+    const raw=localStorage.getItem(key);
+    if(!raw) return;
+    const data=JSON.parse(raw);
+    if(!Array.isArray(data)) return;
+
+    const filtered=data.filter(e=>{
+      const value=Number(e.value);
+      const due=String(e.due||'');
+      const month=String(e.month||due.slice(0,7));
+      const inRange = month >= '2026-09' && month <= '2050-12';
+      return !(inRange && Math.abs(value-0.01) < 0.000001);
+    });
+
+    if(filtered.length!==data.length){
+      localStorage.setItem(key,JSON.stringify(filtered));
+    }
+  }catch(e){}
+})();
+</script>
+
+<script>
+/* v5.2 — navegação de mês por setas */
+(function(){
+  function bindMonthArrows(){
+    const select=document.getElementById('monthSelect');
+    const prev=document.getElementById('prevMonth');
+    const next=document.getElementById('nextMonth');
+    if(!select || !prev || !next || select.dataset.arrowBound==='1') return;
+    select.dataset.arrowBound='1';
+
+    function move(step){
+      const i=select.selectedIndex;
+      const target=i+step;
+      if(target<0 || target>=select.options.length) return;
+      select.selectedIndex=target;
+      select.dispatchEvent(new Event('change',{bubbles:true}));
+    }
+    prev.addEventListener('click',()=>move(-1));
+    next.addEventListener('click',()=>move(1));
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',bindMonthArrows);
+  else bindMonthArrows();
+})();
+</script>
+
+
+<style id="voice-expense-style">
+.voice-add{width:100%;border:0;background:#7c3aed;color:#fff;padding:11px 13px;border-radius:12px;font-weight:800;font-size:14px;margin-top:8px;box-shadow:0 4px 11px rgba(124,58,237,.18);min-height:44px}
+.voice-add:active{transform:scale(.99)}
+.voice-status{display:none;margin:8px 0 0;padding:10px 12px;border-radius:11px;background:#f5f3ff;color:#5b21b6;font-size:12px;line-height:1.35}
+.voice-status.show{display:block}
+</style>
+
+<style id="voice-fallback-style">
+#voiceFallbackBack{position:fixed;inset:0;background:rgba(0,0,0,.62);display:none;align-items:center;justify-content:center;padding:18px;z-index:9999}
+#voiceFallbackBack.show{display:flex}
+.voice-fallback{width:min(520px,100%);background:#fff;border-radius:18px;padding:20px;box-shadow:0 18px 50px rgba(0,0,0,.3)}
+.voice-fallback h3{margin:0 0 8px;font-size:20px}
+.voice-fallback p{margin:8px 0 14px;line-height:1.45;color:#555}
+#voiceTextInput{width:100%;min-height:105px;box-sizing:border-box;border:1px solid #ccc;border-radius:12px;padding:13px;font-size:17px;resize:vertical;outline:none}
+#voiceTextInput:focus{border-color:#1976d2;box-shadow:0 0 0 3px rgba(25,118,210,.12)}
+.voice-fallback-actions{display:flex;gap:10px;margin-top:12px}
+.voice-fallback-actions button{flex:1;border:0;border-radius:11px;padding:13px 10px;font-size:15px;font-weight:700;cursor:pointer}
+#voiceInterpretBtn{background:#1976d2;color:#fff}
+#voiceCloseFallback{background:#eee;color:#333}
+.voice-fallback-hint{font-size:13px!important;color:#666!important;margin-top:10px!important}
+</style>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="anonymous">
+
+<style id="location-picker-style">
+#locationPickerModal{position:fixed;inset:0;background:rgba(0,0,0,.68);display:none;align-items:center;justify-content:center;padding:12px;z-index:10020}
+#locationPickerModal.show{display:flex}
+.location-picker-dialog{width:min(720px,100%);height:min(92vh,760px);background:#fff;border-radius:20px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 20px 70px rgba(0,0,0,.35)}
+.location-picker-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;border-bottom:1px solid #eee;background:#fff}
+.location-picker-head h3{margin:0;font-size:18px}.location-picker-close{border:0;background:#f1f3f5;border-radius:10px;width:40px;height:40px;font-size:20px}
+.location-picker-search{padding:10px 12px;border-bottom:1px solid #eee;background:#fafafa}
+.location-picker-search-row{display:flex;gap:8px}.location-picker-search-row input{flex:1;min-width:0;border:1px solid #d7dce1;border-radius:11px;padding:12px;font-size:15px;background:#fff}
+.location-picker-search-row button{border:0;border-radius:11px;padding:0 14px;background:#1976d2;color:#fff;font-weight:800;min-width:92px}
+.location-picker-tools{display:flex;gap:8px;margin-top:8px}.location-picker-tools button{flex:1;border:1px solid #d9dee3;border-radius:10px;background:#fff;padding:9px 8px;font-weight:700;color:#333}
+#mapSearchResults{max-height:150px;overflow:auto;margin-top:8px;display:grid;gap:6px}
+.map-result{display:block;text-align:left;border:1px solid #e1e5e9;background:#fff;border-radius:10px;padding:9px 10px;cursor:pointer}.map-result small{display:block;color:#666;margin-top:3px;font-size:11px;line-height:1.25}
+#locationPickerMap{flex:1;min-height:280px;background:#e9eef2}
+.location-picker-footer{padding:10px 12px;border-top:1px solid #eee;background:#fff}.location-picker-selected{font-size:12px;color:#444;line-height:1.35;margin-bottom:8px;min-height:18px}
+.location-picker-actions{display:flex;gap:8px}.location-picker-actions button{flex:1;border:0;border-radius:11px;padding:12px;font-weight:800}.location-picker-cancel{background:#eee;color:#333}.location-picker-confirm{background:#14833b;color:#fff}
+.location-picker-note{font-size:11px;color:#777;margin-top:6px;text-align:center}
+@media(max-width:520px){.location-picker-dialog{height:94vh;border-radius:16px}.location-picker-tools button{font-size:12px}.location-picker-search-row button{min-width:82px}.location-picker-actions button{font-size:14px}}
+</style>
+
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#087f5b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Minhas Finanças">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+
+</head>
+<body>
+
+<div id="voiceFallbackBack" onclick="if(event.target===this)closeVoiceFallback()">
+  <div class="voice-fallback" role="dialog" aria-modal="true" aria-labelledby="voiceFallbackTitle">
+    <h3 id="voiceFallbackTitle">🎙️ Lançar despesa por voz</h3>
+    <p>O microfone do navegador não pôde ser usado neste arquivo. Você pode <b>ditar pelo microfone do teclado do Android</b> e o aplicativo interpreta a frase.</p>
+    <textarea id="voiceTextInput" placeholder="Ex.: supermercado 35 reais no cartão Rico"></textarea>
+    <div class="voice-fallback-actions">
+      <button type="button" id="voiceCloseFallback" onclick="closeVoiceFallback()">Cancelar</button>
+      <button type="button" id="voiceInterpretBtn" onclick="interpretVoiceText()">Interpretar lançamento</button>
+    </div>
+    <p class="voice-fallback-hint">💡 No Android, toque no 🎤 do teclado para falar. Depois toque em “Interpretar lançamento”.</p>
+  </div>
+</div>
+
+<div id="locationPickerModal" aria-hidden="true" onclick="if(event.target===this)closeLocationPicker()">
+  <div class="location-picker-dialog" role="dialog" aria-modal="true" aria-labelledby="locationPickerTitle">
+    <div class="location-picker-head">
+      <h3 id="locationPickerTitle">📍 Selecionar local da compra</h3>
+      <button type="button" class="location-picker-close" onclick="closeLocationPicker()" aria-label="Fechar">✕</button>
+    </div>
+    <div class="location-picker-search">
+      <div class="location-picker-search-row">
+        <input id="mapSearchInput" type="search" placeholder="Ex.: Casa Grande Sooretama" autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault();searchInsideLocationPicker();}">
+        <button type="button" onclick="searchInsideLocationPicker()">Pesquisar</button>
+      </div>
+      <div class="location-picker-tools">
+        <button type="button" onclick="usePickerCurrentLocation()">📍 Minha localização</button>
+        <button type="button" onclick="centerPickerBrazil()">🇧🇷 Voltar ao Brasil</button>
+      </div>
+      <div id="mapSearchResults"></div>
+    </div>
+    <div id="locationPickerMap"></div>
+    <div class="location-picker-footer">
+      <div id="locationPickerSelected" class="location-picker-selected">Digite um estabelecimento ou toque no mapa.</div>
+      <div class="location-picker-actions">
+        <button type="button" class="location-picker-cancel" onclick="closeLocationPicker()">Cancelar</button>
+        <button type="button" class="location-picker-confirm" onclick="confirmLocationPicker()">✅ Usar este local</button>
+      </div>
+      <div class="location-picker-note">Você pode tocar no mapa ou arrastar o marcador para ajustar o ponto.</div>
+    </div>
+  </div>
+</div>
+
+<div class="app">
+<header>
+  <div class="top">
+    <div><h1>Minhas Finanças</h1><div class="sub">Controle simples do seu dinheiro • <b>v6.8</b></div></div>
+    <div style="font-size:28px">💰</div>
+  </div>
+  <div class="month-row">
+    <div class="month-nav" aria-label="Navegação de mês">
+  <button type="button" class="month-arrow" id="prevMonth" aria-label="Mês anterior" title="Mês anterior">‹</button>
+  <select id="monthSelect" aria-label="Mês para visualizar"></select>
+  <button type="button" class="month-arrow" id="nextMonth" aria-label="Próximo mês" title="Próximo mês">›</button>
+</div>
+  </div>
+  <div class="fixed-month-panel">
+    <label class="fixed-month-toggle"><input type="checkbox" id="fixedMonthEnabled"> <span><b>📌 Fixar mês dos novos lançamentos</b><small>Escolha o mês em que o aplicativo deve abrir e lançar novas despesas.</small></span></label>
+    <select id="fixedMonthSelect" aria-label="Mês fixado para novos lançamentos" disabled></select>
+    <div id="fixedMonthHint" class="small">Desativado: os novos lançamentos seguem o mês selecionado na tela.</div>
+  </div>
+</header>
+
+<main class="content">
+  <div class="summary">
+    <div class="card"><div class="label">Total de despesas</div><div class="value orange" id="total">R$ 0,00</div></div>
+    <div class="card"><div class="label">Já pago</div><div class="value green" id="paid">R$ 0,00</div></div>
+    <div class="card"><div class="label">A pagar</div><div class="value red" id="pending">R$ 0,00</div></div>
+    <div class="card"><div class="label">Quantidade</div><div class="value" id="count">0</div></div>
+  </div>
+
+  <div class="pay-grid">
+    <div class="card pay-card"><div class="label">📅 Vencimento dia 10</div><div class="value" id="day10">R$ 0,00</div></div>
+    <div class="card pay-card"><div class="label">📅 Vencimento dia 25</div><div class="value" id="day25">R$ 0,00</div></div>
+  </div>
+
+  <div class="main-action-row">
+    <button class="add" onclick="openModal()">＋ Adicionar despesa</button>
+    <button class="whatsapp" onclick="sendWhatsApp()">📲 WhatsApp</button>
+    <button class="pdfbtn" onclick="generatePDF()">📄 PDF</button>
+  </div>
+  <div id="voiceStatus" class="voice-status" aria-live="polite"></div>
+  <input id="backupFile" type="file" accept="application/json,.json" style="display:none" onchange="importBackup(event)">
+  <div class="card" id="backupPanel" style="margin:10px 0 14px;border:1px solid #dbeafe;background:#f8fbff">
+    <div style="font-weight:850;font-size:15px">🛡️ Backup e restauração</div>
+    <div class="small" style="margin-top:4px">Faça uma cópia dos seus lançamentos para guardar ou recuperar seus dados em outro momento.</div>
+    <div class="backup-actions">
+      <button type="button" class="backup-btn" onclick="exportBackup()">⬇️ Fazer backup</button>
+      <button type="button" class="backup-btn restore" onclick="document.getElementById('backupFile').click()">♻️ Restaurar backup</button>
+    </div>
+    <div class="backup-help">Importante: mantenha um arquivo de backup atualizado. Os dados ficam salvos neste navegador/aparelho; limpar os dados do navegador ou abrir o HTML em outro local pode fazer os lançamentos parecerem sumir.</div>
+    <div id="saveStatus" class="backup-help" aria-live="polite">💾 Salvamento automático ativado.</div>
+  </div>
+
+  <div class="print-title"><h2>Minhas Finanças</h2><div id="printMonth"></div></div>
+
+  <div class="section-title"><h2>Contas do mês</h2><span class="small" id="monthLabel"></span></div>
+  <div class="tabs">
+    <button class="tab active" id="tabAll" onclick="setFilter('all')">Todos</button>
+    <button class="tab" id="tabPending" onclick="setFilter('pending')">A pagar</button>
+    <button class="tab" id="tabPaid" onclick="setFilter('paid')">Pagos</button>
+  </div>
+  <div class="due-groups">
+    <button class="due-group-toggle active" id="toggleDay10" onclick="toggleDueGroup(10)">📅 Despesas dia 10 <span id="countDay10"></span><b id="arrowDay10">⌄</b></button>
+    <div class="due-group-panel" id="panelDay10"><div class="list" id="list10"></div><div class="due-cards-title">💳 Cartões com vencimento dia 10</div><div id="cards10" class="card-summary"></div></div>
+    <button class="due-group-toggle" id="toggleDay25" onclick="toggleDueGroup(25)">📅 Despesas dia 25 <span id="countDay25"></span><b id="arrowDay25">⌄</b></button>
+    <div class="due-group-panel" id="panelDay25" hidden><div class="list" id="list25"></div><div class="due-cards-title">💳 Cartões com vencimento dia 25</div><div id="cards25" class="card-summary"></div></div>
+  </div>
+</main>
+
+<div class="bottom">
+ <div class="bottom-inner">
+  <button class="navbtn active" onclick="window.scrollTo({top:0,behavior:'smooth'})"><span>🏠</span>Resumo</button>
+  <button class="navbtn" onclick="openModal()"><span>➕</span>Adicionar</button>
+  <button class="navbtn" onclick="document.getElementById('toggleDay10').scrollIntoView({behavior:'smooth',block:'start'})"><span>🔎</span>Buscar</button>
+ </div>
+</div>
+</div>
+
+<div class="modal-back" id="receiptBack" onclick="if(event.target===this)closeReceiptReader()" style="z-index:10030">
+ <div class="modal" role="dialog" aria-modal="true" aria-labelledby="receiptTitle">
+  <div class="modal-head"><h2 id="receiptTitle">📸 Ler cupom fiscal</h2><button class="close" onclick="closeReceiptReader()" type="button">✕</button></div>
+  <p class="small">Tente primeiro escanear o QR Code da nota. Se não funcionar ou não trouxer os produtos, use a leitura por foto.</p>
+  <button type="button" class="add" style="background:#15803d" onclick="startReceiptQRScanner()">▦ Escanear QR Code com a câmera</button>
+  <div id="receiptQRPanel" style="display:none;margin-top:10px;padding:12px;border:1px solid #bbf7d0;border-radius:14px;background:#f0fdf4">
+   <video id="receiptQRVideo" playsinline muted style="display:none;width:100%;max-height:260px;object-fit:contain;border-radius:10px;background:#111"></video>
+   <div id="receiptQRStatus" class="small" style="margin:8px 0">Aponte a câmera para o QR Code da NFC-e.</div>
+   <button type="button" class="cancel" onclick="stopReceiptQRScanner()">Parar câmera</button>
+   <div id="receiptQRResult" style="display:none;margin-top:10px;overflow-wrap:anywhere"></div>
+   <div style="margin-top:14px;padding-top:12px;border-top:1px solid #bbf7d0">
+    <div style="font-weight:800;margin-bottom:5px">📱 Usar o leitor do próprio celular</div>
+    <div class="small" style="margin-bottom:8px">Abra a câmera normal do celular e leia o QR Code impresso. Se aparecer um link, copie-o e cole aqui:</div>
+    <textarea id="receiptQRManual" rows="3" placeholder="Cole aqui o link ou conteúdo do QR Code" style="width:100%;box-sizing:border-box;border:1px solid #cbd5e1;border-radius:10px;padding:10px"></textarea>
+    <button type="button" class="add" style="margin-top:8px;background:#166534" onclick="processReceiptQRManual()">Usar link / conteúdo colado</button>
+   </div>
+  </div>
+  <div class="field full" style="margin-top:14px"><label>Ou fotografar / escolher uma foto do cupom</label><input id="receiptImage" type="file" accept="image/*" capture="environment" onchange="processReceiptImage(event)" style="width:100%"></div>
+  <img id="receiptPreview" alt="Prévia do cupom" style="display:none;width:100%;max-height:260px;object-fit:contain;margin:10px 0;border-radius:12px;background:#f3f4f6">
+  <div id="receiptProgress" class="voice-status" style="display:block;min-height:0;margin:10px 0">Selecione uma foto para começar.</div>
+  <div id="receiptReview" style="display:none">
+   <div class="form">
+    <div class="field full"><label>Estabelecimento / descrição</label><input id="receiptStore" placeholder="Ex.: Supermercado"></div>
+    <div class="field"><label>Valor total (R$)</label><input id="receiptTotal" type="number" min="0.01" step="0.01" placeholder="0,00"></div>
+    <div class="field"><label>Data da compra</label><input id="receiptDate" type="date"></div>
+    <div class="field"><label>Categoria principal</label><select id="receiptCategory"><option>Alimentação</option><option>Combustível</option><option>Casa</option><option>Saúde</option><option>Compras</option><option>Lazer</option><option>Outros</option></select></div>
+    <div class="field"><label>Forma de pagamento</label><select id="receiptMethod"><option>Dinheiro</option><option>Pix</option><option>Débito</option><option>Cartão de crédito</option><option>Boleto</option></select></div>
+    <div class="field"><label>Conta / cartão</label><input id="receiptAccount" placeholder="Ex.: Rico, Mercado Pago"></div>
+    <div class="field"><label>Status</label><select id="receiptStatus"><option value="paid">Pago</option><option value="pending">A pagar</option></select></div>
+   </div>
+   <div class="section-title"><h2>Produtos identificados</h2><span class="small" id="receiptItemCount"></span></div>
+   <p class="small">Você pode corrigir nomes e valores. Os produtos ficam como detalhes da compra; o orçamento contabiliza apenas o total do cupom, sem duplicar valores.</p>
+   <div id="receiptItemsEditor" style="display:grid;gap:8px"></div>
+   <button type="button" class="backup-btn" style="width:100%;margin-top:8px" onclick="addReceiptItemRow()">＋ Adicionar produto manualmente</button>
+   <div class="form-actions"><button type="button" class="cancel" onclick="closeReceiptReader()">Cancelar</button><button type="button" class="save" onclick="saveReceiptExpense()">Salvar compra</button></div>
+  </div>
+ </div>
+</div>
+
+<div class="purchase-detail-back" id="purchaseDetailBack" onclick="if(event.target===this)closePurchaseDetail()">
+  <div class="purchase-detail-modal">
+    <div class="purchase-detail-head">
+      <div>
+        <div class="purchase-detail-title" id="purchaseDetailTitle">Detalhes da compra</div>
+        <div class="small" id="purchaseDetailSubtitle"></div>
+      </div>
+      <button class="purchase-detail-close" onclick="closePurchaseDetail()">✕</button>
+    </div>
+    <div id="purchaseDetailBody"></div>
+  </div>
+</div>
+
+<div class="modal-back" id="modalBack" onclick="if(event.target===this)closeModal()">
+ <div class="modal">
+  <div class="modal-head"><h2 id="modalTitle">Adicionar gasto</h2><button class="close" onclick="closeModal()">✕</button></div>
+  <div class="small" style="margin:-6px 0 12px">Preencha os dados do lançamento. Se precisar, você pode parcelar a despesa.</div>
+  <form id="form" onsubmit="saveExpense(event)">
+   <input type="hidden" id="editId">
+   <div class="form">
+    <div class="field full"><label>O que foi o gasto?</label><input id="desc" required placeholder="Ex.: Combustível, supermercado..."></div>
+    <div class="field"><label>Valor (R$)</label><input id="value" required type="number" step="0.01" min="0" placeholder="0,00"></div>
+    <div class="field"><label>Data de vencimento</label><input id="due" required type="date"></div>
+    <div class="field"><label>Categoria</label>
+      <select id="category">
+       <option>Casa</option><option>Alimentação</option><option>Combustível</option><option>Cartão</option>
+       <option>Saúde</option><option>Academia</option><option>Telefone</option><option>Internet</option>
+       <option>Seguro</option><option>Impostos</option><option>Doação</option><option>Outros</option>
+      </select>
+    </div>
+    <div class="field"><label>Forma de pagamento</label>
+      <select id="method">
+       <option>Pix</option><option>Dinheiro</option><option>Débito</option><option>Cartão de crédito</option><option>Boleto</option>
+      </select>
+    </div>
+    <div class="field"><label>Conta / cartão</label><input id="account" placeholder="Ex.: Cartão Rico"></div>
+    <div class="field"><label>Status</label>
+      <select id="status"><option value="pending">A pagar</option><option value="paid">Pago</option></select>
+    </div>
+    <div class="fixed-box" id="installmentBox">
+      <div style="flex:1"><label>🔢 Despesa variável / parcelada</label><div class="fixed-help">Se quiser, informe em quantas vezes. Cada parcela entra no mês correspondente.</div></div>
+      <select id="installments" style="border:1px solid #fed7aa;border-radius:10px;padding:8px;background:#fff">
+        <option value="1">1 vez</option><option value="2">2 vezes</option><option value="3">3 vezes</option><option value="4">4 vezes</option><option value="5">5 vezes</option><option value="6">6 vezes</option><option value="7">7 vezes</option><option value="8">8 vezes</option><option value="9">9 vezes</option><option value="10">10 vezes</option><option value="12">12 vezes</option>
+      </select>
+    </div>
+    <div class="field"><label>Data do pagamento</label><input id="paidDate" type="date"></div>
+    <div class="field full"><label>Observação (opcional)</label><input id="note" placeholder="Ex.: posto X, compra do mês..."></div>
+    <div class="location-box">
+      <div class="location-head"><div><div class="location-title">📍 Local da compra</div><div class="location-help">Opcional. Você pode informar o estabelecimento ou usar a localização atual do celular.</div></div></div>
+      <input id="locationName" placeholder="Ex.: Supermercado, Posto X, Padaria..." style="width:100%;margin-top:8px">
+      <input type="hidden" id="locationLat"><input type="hidden" id="locationLng"><input type="hidden" id="locationAddress">
+      <div class="location-actions"><button type="button" class="location-btn" onclick="useCurrentLocation()">📍 Usar minha localização</button><button type="button" class="location-map-btn" onclick="openLocationPicker('main')">📍 Selecionar no mapa</button><button type="button" class="location-help-btn" onclick="searchLocationOnMap()">🗺️ Google Maps</button><button type="button" class="location-help-btn" onclick="showLocationHelp()">❓ Ajuda</button><button type="button" class="location-clear" onclick="clearLocation()">Limpar</button></div>
+      <div id="locationStatus" class="location-status"></div><div id="locationCoords" class="location-coords"></div>
+    </div>
+    <div id="locationHelp" class="location-help-panel" style="display:none">
+      <b>📍 Sobre a localização</b>
+      <div>Se o Android/Chrome bloquear o GPS deste arquivo, não tem problema: digite o nome do estabelecimento e toque em <b>🗺️ Pesquisar no mapa</b>. O Google Maps abrirá a pesquisa do local. Se este HTML estiver aberto como arquivo local (content://), o Chrome pode bloquear o GPS. Nesse caso, use o mapa; o nome do estabelecimento será usado na pesquisa.</div>
+    </div>
+    <div id="cardManager" class="card-manager" style="display:none">
+      <div id="cardItems"></div>
+      <button type="button" class="add-card-item" onclick="addCardItem()">＋ Lançar gasto dentro deste cartão</button>
+      <div id="cardManagerSummary" class="card-manager-summary"></div>
+    </div>
+   </div>
+   <div class="form-actions"><button type="button" class="cancel" onclick="closeModal()">Cancelar</button><button class="save">Salvar gasto</button></div>
+  </form>
+ </div>
+</div>
+
+<script>
+const KEY='minhas_financas_v1';
+let expenses=null;
+try{
+ const raw=localStorage.getItem(KEY);
+ expenses=raw?JSON.parse(raw):null;
+ if(!Array.isArray(expenses)) expenses=null;
+}catch(err){
+ expenses=null;
+ try{localStorage.removeItem(KEY);}catch(e){}
+}
+let filter='all';
+
+function money(v){return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
+function isoDate(d){return d.toISOString().slice(0,10);}
+function currentMonth(){return document.getElementById('monthSelect').value;}
+function save(){
+  try{
+    localStorage.setItem(KEY,JSON.stringify(expenses));
+    const status=document.getElementById('saveStatus');
+    if(status) status.textContent='✅ Alterações salvas neste navegador.';
+    return true;
+  }catch(err){
+    const status=document.getElementById('saveStatus');
+    if(status) status.textContent='⚠️ Não foi possível salvar neste navegador. Faça um backup agora e evite fechar esta página.';
+    alert('Atenção: o navegador bloqueou o salvamento dos dados. Faça um backup em “Backup e restauração” antes de sair.');
+    return false;
+  }
+}
+const FIXED_MONTH_KEY='minhas_financas_fixed_month_v1';
+function getFixedMonthSettings(){try{return JSON.parse(localStorage.getItem(FIXED_MONTH_KEY)||'{}')||{};}catch(e){return {};}}
+function targetMonthForNewEntries(){const st=getFixedMonthSettings();return st.enabled&&/^\d{4}-\d{2}$/.test(st.month||'')?st.month:(currentMonth()||isoDate(new Date()).slice(0,7));}
+function fillFixedMonthOptions(){const src=document.getElementById('monthSelect'),dst=document.getElementById('fixedMonthSelect');if(!src||!dst)return;dst.innerHTML=src.innerHTML;const st=getFixedMonthSettings();dst.value=st.month||monthAdd(isoDate(new Date()).slice(0,7),1);if(![...dst.options].some(o=>o.value===dst.value)){const o=document.createElement('option');o.value=dst.value;o.textContent=dst.value;dst.appendChild(o);}document.getElementById('fixedMonthEnabled').checked=!!st.enabled;dst.disabled=!st.enabled;updateFixedMonthHint();}
+function updateFixedMonthHint(){const st=getFixedMonthSettings(),el=document.getElementById('fixedMonthHint'),sel=document.getElementById('fixedMonthSelect');if(!el||!sel)return;const label=sel.options[sel.selectedIndex]?.textContent||sel.value;el.textContent=st.enabled?`Ativado: novos lançamentos irão para ${label}. Para pagar contas antigas, mude o mês consultado acima; isso não altera os vencimentos existentes.`:'Desativado: os novos lançamentos seguem o mês selecionado na tela.';}
+function bindFixedMonthControls(){fillFixedMonthOptions();const enabled=document.getElementById('fixedMonthEnabled'),sel=document.getElementById('fixedMonthSelect');if(!enabled||!sel||enabled.dataset.bound==='1')return;enabled.dataset.bound='1';enabled.addEventListener('change',()=>{const st=getFixedMonthSettings();st.enabled=enabled.checked;st.month=sel.value||monthAdd(isoDate(new Date()).slice(0,7),1);localStorage.setItem(FIXED_MONTH_KEY,JSON.stringify(st));sel.disabled=!st.enabled;updateFixedMonthHint();});sel.addEventListener('change',()=>{const st=getFixedMonthSettings();st.enabled=enabled.checked;st.month=sel.value;localStorage.setItem(FIXED_MONTH_KEY,JSON.stringify(st));updateFixedMonthHint();});}
+
+function migrateSampleToOctober(){
+ const sampleNames=['Seguro','Telefone','Internet','Donativo','Energia','Academia','Água','MEI','Plano de saúde',
+                    'Cartão Rico','Cartão MP','Celular 3/10','MP extra','Rico extra'];
+ const candidates=expenses.filter(e=>sampleNames.includes(e.desc) && e.due.startsWith('2026-09-'));
+ if(candidates.length>=12 && !localStorage.getItem('minhas_financas_migrated_october')){
+   candidates.forEach(e=>e.due=e.due.replace('2026-09-','2026-10-'));
+   save();
+   localStorage.setItem('minhas_financas_migrated_october','1');
+ }
+}
+function seed(){
+ if(expenses) return;
+ const y=2026,m=10;
+ const mk=(id,desc,value,day,cat,method,account,status='pending')=>({id,desc,value,due:`${y}-${String(m).padStart(2,'0')}-${String(day).padStart(2,'0')}`,category:cat,method,account,status,paidDate:'',note:''});
+ expenses=[
+  mk(uid(),'Seguro',330,10,'Seguro','Boleto','Conta'),
+  mk(uid(),'Telefone',65,10,'Telefone','Débito','Conta'),
+  mk(uid(),'Internet',90,10,'Internet','Pix','Conta'),
+  mk(uid(),'Donativo',250,10,'Doação','Pix','Conta'),
+  mk(uid(),'Energia',300,10,'Casa','Boleto','Conta'),
+  mk(uid(),'Academia',85,10,'Academia','Débito','Conta'),
+  mk(uid(),'Água',0,10,'Casa','Boleto','Conta'),
+  mk(uid(),'MEI',80,25,'Impostos','Boleto','Conta'),
+  mk(uid(),'Plano de saúde',250,25,'Saúde','Débito','Conta'),
+  mk(uid(),'Cartão Rico',2358,10,'Cartão','Cartão de crédito','Rico'),
+  mk(uid(),'Cartão MP',951,25,'Cartão','Cartão de crédito','Mercado Pago'),
+  mk(uid(),'Celular 3/10',117,25,'Telefone','Cartão de crédito','Cartão'),
+  mk(uid(),'MP extra',165,25,'Cartão','Cartão de crédito','Mercado Pago'),
+  mk(uid(),'Rico extra',155,10,'Cartão','Cartão de crédito','Rico')
+ ];
+ save();
+}
+function setupMonths(){
+ const s=document.getElementById('monthSelect');
+ s.innerHTML='';
+ const now=new Date();
+ for(let i=-12;i<=24;i++){
+   const d=new Date(now.getFullYear(),now.getMonth()+i,1);
+   const val=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+   const text=d.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+   const label=text.charAt(0).toUpperCase()+text.slice(1);
+   s.insertAdjacentHTML('beforeend',`<option value="${val}">${label}</option>`);
+ }
+ s.value=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+}
+function icon(cat){
+ return ({'Combustível':'⛽','Alimentação':'🍽️','Cartão':'💳','Casa':'🏠','Saúde':'❤️','Academia':'🏋️','Telefone':'📱','Internet':'🌐','Seguro':'🛡️','Doação':'❤️','Impostos':'🧾'})[cat]||'💰';
+}
+
+function removeDuplicateExpenses(){
+  // Remove lançamentos duplicados criados por versões anteriores.
+  // Só considera duplicado quando os dados principais são exatamente iguais.
+  const seen=new Map();
+  const cleaned=[];
+  let changed=false;
+  for(const e of expenses){
+    const signature=[e.desc,e.due,Number(e.value||0),e.category,e.method,e.account,e.note||''].join('\u001f');
+    if(seen.has(signature)){
+      const first=seen.get(signature);
+      // Não perde gastos internos de cartão caso existam em duas cópias.
+      if(Array.isArray(e.cardItems) && e.cardItems.length){
+        first.cardItems=Array.isArray(first.cardItems)?first.cardItems.concat(e.cardItems):e.cardItems.slice();
+      }
+      changed=true;
+      continue;
+    }
+    seen.set(signature,e);
+    cleaned.push(e);
+  }
+  if(changed){ expenses=cleaned; save(); }
+}
+
+function migrateToMonthly(){
+  let changed=false;
+  for(const e of expenses){
+    if(e.cardPurchase || e.monthly || String(e.desc||'').includes(' • parcela ')) continue;
+    e.monthly=true; changed=true;
+  }
+  if(changed) save();
+}
+
+function cleanupDuplicatePiaRico(){
+  // A partir de janeiro/2027, o cartão Rico deve ter apenas um gasto
+  // interno chamado PIA no valor de R$ 155,00 por lançamento mensal.
+  let changed=false;
+  for(const e of expenses){
+    const month=sameMonthKey(e.due);
+    const account=String(e.account||e.card||'').trim().toLowerCase();
+    const desc=String(e.desc||e.description||'').trim().toLowerCase();
+    const isRico=(account==='rico' || desc==='cartão rico' || desc==='cartao rico');
+    if(month<'2027-01' || !isRico || e.method!=='Cartão de crédito' || !Array.isArray(e.cardItems)) continue;
+
+    let piaFound=false;
+    const filtered=[];
+    for(const item of e.cardItems){
+      const itemDesc=String(item.desc||'').trim().toLowerCase();
+      const isPia=(itemDesc==='pia' && Number(item.value||0)===155);
+      if(isPia){
+        if(piaFound){ changed=true; continue; }
+        piaFound=true;
+      }
+      filtered.push(item);
+    }
+    e.cardItems=filtered;
+  }
+  if(changed) save();
+}
+
+function dedupeFutureEmptyCards(){
+  // Mantém apenas um cartão Rico e um cartão MP zerado por mês a partir de 11/2026.
+  let changed=false;
+  const seen=new Set();
+  const out=[];
+  for(const e of expenses){
+    const month=sameMonthKey(e.due);
+    const account=String(e.account||'').trim().toLowerCase();
+    const desc=String(e.desc||'').trim().toLowerCase();
+    const isTarget=month>='2026-11' && Number(e.value||0)===0 && e.method==='Cartão de crédito' && !e.cardPurchase &&
+      ((account==='rico' && desc==='cartão rico') || (account==='mercado pago' && desc==='cartão mp'));
+    if(isTarget){
+      const key=month+'|'+account;
+      if(seen.has(key)){ changed=true; continue; }
+      seen.add(key);
+    }
+    out.push(e);
+  }
+  if(changed){ expenses=out; save(); }
+}
+
+function ensureFutureEmptyCards(){
+  // A partir de novembro/2026, deixa um cartão Rico e um cartão MP
+  // zerados por mês, para receber novos gastos internos no futuro.
+  const start='2026-11';
+  const now=new Date();
+  let changed=false;
+  const monthKey=(y,m)=>`${y}-${String(m).padStart(2,'0')}`;
+  const lastMonth=new Date(now.getFullYear(),now.getMonth()+24,1);
+  for(let d=new Date(2026,10,1); d<=lastMonth; d=new Date(d.getFullYear(),d.getMonth()+1,1)){
+    const month=monthKey(d.getFullYear(),d.getMonth()+1);
+    if(month<start) continue;
+    const specs=[
+      {name:'Cartão Rico',account:'Rico',day:10},
+      {name:'Cartão MP',account:'Mercado Pago',day:25}
+    ];
+    for(const spec of specs){
+      let card=expenses.find(e=>sameMonthKey(e.due)===month && e.method==='Cartão de crédito' &&
+        !e.cardPurchase && String(e.account||'').trim().toLowerCase()===spec.account.toLowerCase() &&
+        String(e.desc||'').trim().toLowerCase()===spec.name.toLowerCase());
+      if(!card){
+        expenses.push({
+          id:uid(), desc:spec.name, value:0,
+          due:`${month}-${String(spec.day).padStart(2,'0')}`,
+          category:'Cartão', method:'Cartão de crédito', account:spec.account,
+          status:'pending', paidDate:'', note:'', cardItems:[]
+        });
+        changed=true;
+      }else if(Number(card.value||0)===0.01){
+        card.value=0;
+        changed=true;
+      }
+    }
+  }
+  if(changed) save();
+}
+
+function removeGhostGeneralExpense(){
+  // Remove a despesa fantasma "Geral" criada por versões anteriores.
+  // O usuário confirmou que esse lançamento não existe.
+  const before=expenses.length;
+  expenses=expenses.filter(e=>String(e.desc||'').trim().toLowerCase()!=='geral');
+  if(expenses.length!==before) save();
+}
+
+function cleanupLegacyFixedData(){
+  // Remove a lógica antiga de despesas fixas/recorrentes.
+  // Lançamentos antigos continuam visíveis como despesas normais.
+  let changed=false;
+  expenses = expenses.filter(e=>{
+    if(e.fixed && !e.fixedOccurrence && !e.recurringOccurrence && e.due){
+      delete e.fixed; delete e.fixedUntil; changed=true; return true;
+    }
+    if(e.fixed || e.fixedOccurrence || e.recurringOccurrence || e.fixedUntil){
+      delete e.fixed; delete e.fixedOccurrence; delete e.recurringOccurrence; delete e.fixedUntil; changed=true;
+    }
+    return true;
+  });
+  if(changed) save();
+}
+
+function cardItemsTotal(e){ return Array.isArray(e.cardItems)?e.cardItems.reduce((a,x)=>a+Number(x.value||0),0):0; }
+function effectiveValue(e){ return Number(e.value||0) + (e.method==='Cartão de crédito' && !e.cardPurchase ? cardItemsTotal(e) : 0); }
+function cardDisplayValue(e){ return Number(e.value||0) + cardItemsTotal(e); }
+function render(){
+  normalizeMonthlyData();
+  const month=currentMonth();
+  ensureMonthlyForMonth(month);
+  const arr=expenses.filter(e=>e.due.startsWith(month));
+ const total=arr.reduce((a,e)=>a+effectiveValue(e),0);
+ const paid=arr.filter(e=>e.status==='paid').reduce((a,e)=>a+effectiveValue(e),0);
+ document.getElementById('total').textContent=money(total);
+ document.getElementById('paid').textContent=money(paid);
+ document.getElementById('pending').textContent=money(total-paid);
+ document.getElementById('count').textContent=arr.length;
+ document.getElementById('day10').textContent=money(arr.filter(e=>new Date(e.due+'T12:00:00').getDate()===10).reduce((a,e)=>a+effectiveValue(e),0));
+ document.getElementById('day25').textContent=money(arr.filter(e=>new Date(e.due+'T12:00:00').getDate()===25).reduce((a,e)=>a+effectiveValue(e),0));
+ document.getElementById('monthLabel').textContent=new Date(month+'-01T12:00:00').toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+ renderList();
+
+}
+function renderCardSummary(day){
+  const month=currentMonth();
+  const cards=expenses.filter(e=>e.due.startsWith(month) && new Date(e.due+'T12:00:00').getDate()===day && e.method==='Cartão de crédito' && !e.cardPurchase);
+  const box=document.getElementById(day===10?'cards10':'cards25');
+  if(!cards.length){box.innerHTML='<div class="empty">Nenhum cartão neste vencimento.</div>';return;}
+
+  box.innerHTML=cards.map(e=>{
+    const internal=cardItemsTotal(e), total=Number(e.value||0)+internal;
+    const cats={};
+    (e.cardItems||[]).forEach(x=>cats[x.category]=(cats[x.category]||0)+Number(x.value||0));
+
+    const purchases=(e.cardItems||[]).slice().sort((a,b)=>String(a.date||'').localeCompare(String(b.date||'')));
+    const purchaseHtml=purchases.length
+      ? `<div class="card-purchase-list">${purchases.map(x=>{
+          const date=x.date?new Date(x.date+'T12:00:00').toLocaleDateString('pt-BR'):'';
+          return `<div class="card-purchase purchase-click" onclick="showCardPurchaseDetails('${e.id}','${x.id}')">
+            <div class="card-purchase-main">
+              <div class="card-purchase-name">${icon(x.category)} ${esc(x.desc)}</div>
+              <div class="card-purchase-meta">${esc(x.category)}${date?' • '+date:''}${Number(x.installments||1)>1?' • Parcela '+Number(x.installmentNo||1)+'/'+Number(x.installments||1):''}${x.locationName?' • 📍 '+esc(x.locationName):''}</div>
+            </div>
+            <b>${money(x.value)}</b>
+          </div>`;
+        }).join('')}</div>`
+      : '<div class="card-zero">Nenhum gasto interno lançado.</div>';
+
+    const catHtml=Object.entries(cats).sort((a,b)=>b[1]-a[1]).map(([c,v])=>
+      `<div class="card-category-total"><span>${icon(c)} ${esc(c)}</span><b>${money(v)}</b></div>`
+    ).join('');
+
+    return `<div class="card-detail">
+      <div class="card-detail-head">
+        <div>
+          <div class="card-detail-title">💳 ${esc(e.account||e.desc)}</div>
+          <div class="small">${esc(e.desc)}</div>
+        </div>
+        <div class="card-detail-total">${money(total)}</div>
+      </div>
+      <div class="small">Base da fatura: ${money(e.value)} • Gastos dentro do cartão: ${money(internal)}</div>
+      ${purchaseHtml}
+      ${catHtml?`<div style="margin-top:11px"><div class="small" style="font-weight:800;margin-bottom:4px">Total por categoria</div>${catHtml}</div>`:''}
+      <button class="card-add-btn" onclick="addCardPurchaseDirect('${e.id}')">＋ Adicionar gasto neste cartão</button>
+      <div class="actions" style="margin-top:9px"><button onclick="editExpense('${e.id}')">✏️ Editar fatura/cartão</button></div>
+    </div>`;
+  }).join('');
+}
+
+function addCardPurchaseDirect(cardId){
+  const card=expenses.find(e=>e.id===cardId);
+  if(!card || !cardIsEditable(card)) return;
+
+  openModal(cardId);
+
+  setTimeout(()=>{
+    const wrap=document.getElementById('cardItems');
+    const before=wrap.querySelectorAll('.card-item-row').length;
+    addCardItem();
+    const rows=wrap.querySelectorAll('.card-item-row');
+    const row=rows[rows.length-1];
+    if(row){
+      row.querySelector('.ci-date').value=isoDate(new Date());
+      row.querySelector('.ci-desc').focus();
+    }
+    updateCardManagerSummary();
+  },30);
+}
+
+function populateCategoryFilter(){
+ const sel=document.getElementById('categoryFilter');
+ if(!sel) return;
+ const month=currentMonth();
+ const cats=[...new Set(expenses.filter(e=>e.due?.startsWith(month)).map(e=>e.category).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+ const current=categoryFilter;
+ sel.innerHTML='<option value="all">Todas as categorias</option>'+cats.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+ sel.value=cats.includes(current)?current:'all';
+ categoryFilter=sel.value;
+}
+function setFilter(f){
+ filter=f;
+ ['All','Pending','Paid'].forEach(x=>document.getElementById('tab'+x).classList.remove('active'));
+ document.getElementById('tab'+(f==='all'?'All':f==='pending'?'Pending':'Paid')).classList.add('active');
+ renderList();
+}
+let openDueGroup=10;
+function toggleDueGroup(day){
+  openDueGroup=day;
+  [10,25].forEach(d=>{
+    const active=d===day;
+    document.getElementById('panelDay'+d).hidden=!active;
+    document.getElementById('toggleDay'+d).classList.toggle('active',active);
+    document.getElementById('arrowDay'+d).textContent=active?'⌃':'⌄';
+  });
+}
+function renderList(){
+ const month=currentMonth();
+ const all=expenses.filter(e=>e.due?.startsWith(month) && !e.cardPurchase);
+ [10,25].forEach(day=>{
+   let arr=all.filter(e=>new Date(e.due+'T12:00:00').getDate()===day);
+   if(filter!=='all') arr=arr.filter(e=>e.status===filter);
+   arr.sort((a,b)=>a.due.localeCompare(b.due));
+   const el=document.getElementById(day===10?'list10':'list25');
+   document.getElementById(day===10?'countDay10':'countDay25').textContent=arr.length;
+   if(!arr.length){el.innerHTML='<div class="empty">Nenhuma despesa com vencimento dia '+day+'.</div>';}
+   else el.innerHTML=arr.map(e=>{
+     const due=new Date(e.due+'T12:00:00').toLocaleDateString('pt-BR');
+     const paidClass=e.status==='paid'?' isPaid':'';
+     const displayValue=cardDisplayValue(e);
+     return `<div class="item ${day===10?'due10':'due25'}${paidClass}">
+      <div class="icon">${icon(e.category)}</div>
+      <div class="item-main">
+       <div class="item-title">${esc(e.desc)}</div>
+       <div class="item-meta">Vence ${due} • ${esc(e.account||e.method||'')}</div>
+       ${e.method==='Cartão de crédito' && e.cardItems?.length ? `<div class="card-inline-summary">💳 ${e.cardItems.length} gasto(s) • +${money(cardItemsTotal(e))} lançado dentro do cartão</div>` : ''}
+       ${e.receiptItems?.length ? `<div class="card-inline-summary">🧾 ${e.receiptItems.length} produto(s) no cupom • total contabilizado uma vez</div><div class="actions" style="justify-content:flex-start"><button onclick="showReceiptDetails('${e.id}')">🧾 Ver produtos</button></div>` : ''}
+       ${e.note?`<div class="item-meta">${esc(e.note)}</div>`:''}
+       <span class="badge ${e.status}">${e.status==='paid'?'PAGO':'A PAGAR'}</span>
+      </div>
+      <div class="item-right"><div class="item-value">${money(displayValue)}</div><div class="actions"><button onclick="togglePaid('${e.id}')">${e.status==='paid'?'↩':'✓'}</button><button onclick="editExpense('${e.id}')">✏️</button><button onclick="deleteExpense('${e.id}')">🗑️</button></div></div>
+     </div>`;
+   }).join('');
+   renderCardSummary(day);
+ });
+ toggleDueGroup(openDueGroup);
+}
+
+function showCardPurchaseDetails(cardId,itemId){
+ const card=expenses.find(e=>e.id===cardId);
+ const item=card?.cardItems?.find(x=>x.id===itemId);
+ if(!card || !item) return;
+ const totalInst=Math.max(1,Number(item.installments||1));
+ const no=Math.max(1,Number(item.installmentNo||1));
+ const totalPurchase=Number(item.value||0)*totalInst;
+ const date=item.date?new Date(item.date+'T12:00:00').toLocaleDateString('pt-BR'):'—';
+ document.getElementById('purchaseDetailTitle').textContent=`${icon(item.category)} ${item.desc}`;
+ document.getElementById('purchaseDetailSubtitle').textContent=`${card.account||card.desc} • ${date}`;
+ document.getElementById('purchaseDetailBody').innerHTML=`
+   <div class="purchase-detail-grid">
+     <div class="purchase-detail-box"><div class="label">Valor da parcela</div><div class="value">${money(item.value)}</div></div>
+     <div class="purchase-detail-box"><div class="label">Parcela</div><div class="value">${no}/${totalInst}</div></div>
+     <div class="purchase-detail-box"><div class="label">Valor total da compra</div><div class="value">${money(totalPurchase)}</div></div>
+     <div class="purchase-detail-box"><div class="label">Categoria</div><div class="value">${esc(item.category||'Outros')}</div></div>
+      ${item.locationName||item.locationLat?`<div class="purchase-detail-box"><div class="label">📍 Local da compra</div><div class="value">${esc(item.locationAddress||item.locationName||'Localização salva')}</div>${item.locationLat&&item.locationLng?`<a class="location-link" href="https://www.google.com/maps?q=${encodeURIComponent(item.locationLat+','+item.locationLng)}" target="_blank" rel="noopener">Ver no mapa</a>`:''}</div>`:''}
+   </div>
+   ${totalInst>1?`<div class="purchase-detail-note">🔢 Compra parcelada em ${totalInst} vezes. Esta é a parcela ${no} de ${totalInst}. As demais parcelas ficam nos meses seguintes do mesmo cartão.</div>`:`<div class="purchase-detail-note">💳 Compra à vista lançada neste cartão.</div>`}
+ `;
+ document.getElementById('purchaseDetailBack').classList.add('show');
+}
+function closePurchaseDetail(){document.getElementById('purchaseDetailBack').classList.remove('show');}
+
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));}
+
+function cardIsEditable(e){ return e && e.method==='Cartão de crédito' && !e.cardPurchase; }
+function showCardManager(e){
+ const manager=document.getElementById('cardManager');
+ const isCard=cardIsEditable(e);
+ manager.style.display=isCard?'block':'none';
+ if(isCard) renderCardItems(e.cardItems||[]);
+}
+function addCardItem(item={}){
+ const wrap=document.getElementById('cardItems');
+ const id=item.id||uid();
+ const row=document.createElement('div');
+ row.className='card-item-row'; row.dataset.id=id; if(item.fiscalQrCode) row.dataset.fiscalQrCode=item.fiscalQrCode; if(item.fiscalKey) row.dataset.fiscalKey=item.fiscalKey; if(item.installmentId) row.dataset.installmentId=item.installmentId; if(item.installmentNo) row.dataset.installmentNo=item.installmentNo;
+ const totalInst=Math.max(1,Number(item.installments||1));
+ const instNo=Number(item.installmentNo||1);
+ const locked=item.installmentId?'disabled':'';
+ row.innerHTML=`
+  <div class="field full"><label>O que foi gasto?</label><input class="ci-desc" required placeholder="Ex.: Celular, supermercado..." value="${esc(item.desc||'')}"></div>
+  <div class="field"><label>Valor (R$)</label><input class="ci-value" required type="number" min="0" step="0.01" value="${item.value??''}" placeholder="0,00"></div>
+  <div class="field"><label>Categoria</label><select class="ci-cat">${['Alimentação','Combustível','Casa','Saúde','Academia','Telefone','Compras','Lazer','Outros'].map(c=>`<option ${item.category===c?'selected':''}>${c}</option>`).join('')}</select></div>
+  <div class="field"><label>Data da compra</label><input class="ci-date" type="date" value="${item.date||isoDate(new Date())}"></div>
+   <div class="field full"><label>📍 Local da compra</label><input class="ci-location-name" placeholder="Ex.: Supermercado, Posto X..." value="${esc(item.locationName||'')}"></div>
+   <input type="hidden" class="ci-location-lat" value="${item.locationLat??''}">
+   <input type="hidden" class="ci-location-lng" value="${item.locationLng??''}">
+   <div class="field full"><div class="location-actions"><button type="button" class="location-btn" onclick="useCardItemLocation(this)">📍 Usar minha localização</button><button type="button" class="location-map-btn" onclick="openLocationPicker('card',this)">📍 Selecionar no mapa</button></div><div class="location-coords ci-location-coords">${item.locationLat&&item.locationLng?'Localização salva':''}</div></div>
+  <div class="card-installment-box">
+    <label>🔢 Parcelamento</label>
+    <select class="ci-installments" ${locked}>
+      ${Array.from({length:12},(_,i)=>i+1).map(n=>`<option value="${n}" ${totalInst===n?'selected':''}>${n} ${n===1?'vez':'vezes'}</option>`).join('')}
+    </select>
+  </div>
+  ${item.installmentId?`<div class="card-installment-info">📅 Parcela ${instNo}/${totalInst} • Esta parcela faz parte de uma compra parcelada.</div>`:''}
+  <button type="button" class="remove-card-item" onclick="this.closest('.card-item-row').remove();updateCardManagerSummary()">🗑️ Remover</button>`;
+ wrap.appendChild(row); updateCardManagerSummary();
+}
+function renderCardItems(items){
+ document.getElementById('cardItems').innerHTML='';
+ items.forEach(addCardItem);
+ updateCardManagerSummary();
+}
+function collectCardItems(){
+ return [...document.querySelectorAll('#cardItems .card-item-row')].map(row=>({
+   id:row.dataset.id,
+   desc:row.querySelector('.ci-desc').value.trim(),
+   value:Number(row.querySelector('.ci-value').value||0),
+   category:row.querySelector('.ci-cat').value,
+   date:row.querySelector('.ci-date').value,
+   locationName:row.querySelector('.ci-location-name')?.value.trim()||'',
+   locationLat:row.querySelector('.ci-location-lat')?.value||'',
+   locationLng:row.querySelector('.ci-location-lng')?.value||'',
+   installments:Number(row.querySelector('.ci-installments')?.value||1),
+   installmentId:row.dataset.installmentId||'',
+   installmentNo:Number(row.dataset.installmentNo||1),
+   fiscalQrCode:row.dataset.fiscalQrCode||'',
+   fiscalKey:row.dataset.fiscalKey||''
+ })).filter(x=>x.desc && x.value>0);
+}
+function updateCardManagerSummary(){
+ const box=document.getElementById('cardManagerSummary'); if(!box)return;
+ const items=collectCardItems();
+ if(!items.length){box.innerHTML='<div class="small">Nenhum gasto lançado neste cartão ainda.</div>';return;}
+ const total=items.reduce((a,x)=>a+x.value,0), cats={};
+ items.forEach(x=>cats[x.category]=(cats[x.category]||0)+x.value);
+ box.innerHTML=`<div class="summary-line"><span>Total gasto no cartão</span><b>${money(total)}</b></div>` + Object.entries(cats).sort((a,b)=>b[1]-a[1]).map(([c,v])=>`<div class="cat-row"><span>${icon(c)} ${esc(c)}</span><b>${money(v)}</b></div>`).join('');
+}
+
+function openModal(id=''){
+ document.getElementById('modalBack').classList.add('show');
+ document.getElementById('modalTitle').textContent=id?'Editar gasto':'Adicionar gasto';
+ document.getElementById('form').reset();
+ document.getElementById('installments').value='1';
+ document.getElementById('installmentBox').style.display='flex';
+ document.getElementById('editId').value=id;
+ if(id){
+  const e=expenses.find(x=>x.id===id);
+  for(const k of ['desc','value','due','category','method','account','status','paidDate','note','locationName','locationLat','locationLng','locationAddress']) if(document.getElementById(k)) document.getElementById(k).value=e[k]??'';
+  showCardManager(e);
+  document.getElementById('form').classList.toggle('card-statement-mode', cardIsEditable(e));
+ }else{
+  document.getElementById('form').classList.remove('card-statement-mode');
+  showCardManager(null);
+  const month=targetMonthForNewEntries();
+  document.getElementById('due').value=monthDate(month,10);
+  document.getElementById('status').value='pending';
+   clearLocation();
+ }
+ if(id){ setTimeout(()=>refreshLocationDisplay(),0); }
+}
+function closeModal(){document.getElementById('modalBack').classList.remove('show');}
+function sameMonthKey(dateStr){ return String(dateStr||'').slice(0,7); }
+function monthAdd(ym, delta){
+  const [y,m]=ym.split('-').map(Number); const d=new Date(y,m-1+delta,1);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+}
+function monthDate(ym, day){
+  const [y,m]=ym.split('-').map(Number); const last=new Date(y,m,0).getDate();
+  const dd=Math.min(Number(day)||1,last);
+  return `${y}-${String(m).padStart(2,'0')}-${String(dd).padStart(2,'0')}`;
+}
+function monthlySignature(e){
+  return [e.desc,e.category,e.method,e.account,e.note||''].join('\u001f');
+}
+
+function normalizeMonthlyData(){
+  // Corrige dados de versões antigas: ocorrência mensal nunca pode virar uma nova base mensal.
+  let changed=false;
+  const seenOcc=new Set();
+  const seenBase=new Map();
+  const cleaned=[];
+
+  // Primeiro, elimina ocorrências mensais duplicadas (mesma origem + mês).
+  for(const e of expenses){
+    if(e.monthlyOccurrence){
+      e.monthly=false;
+      const key=`${e.monthlyOrigin||''}|${sameMonthKey(e.due)}`;
+      if(seenOcc.has(key)){ changed=true; continue; }
+      seenOcc.add(key);
+    }
+    cleaned.push(e);
+  }
+  expenses=cleaned;
+
+  // Em versões antigas, a mesma despesa-base podia ter sido criada várias vezes.
+  // Mantemos somente a primeira base por descrição/categoria/forma/conta/observação.
+  const out=[];
+  for(const e of expenses){
+    if(e.monthly && !e.monthlyOccurrence && !e.cardPurchase){
+      const key=monthlySignature(e);
+      if(seenBase.has(key)){
+        // Se a cópia for anterior, ela passa a ser a base; caso contrário, descarte a cópia.
+        changed=true;
+        continue;
+      }
+      seenBase.set(key,e.id);
+    }
+    out.push(e);
+  }
+  expenses=out;
+  if(changed) save();
+}
+
+function isFutureEmptyCard(e, ym){
+  const month=sameMonthKey(e?.due||ym);
+  const account=String(e?.account||'').trim().toLowerCase();
+  const desc=String(e?.desc||'').trim().toLowerCase();
+  return month>='2026-11' && e?.method==='Cartão de crédito' && !e?.cardPurchase &&
+    ((account==='rico' && desc==='cartão rico') || (account==='mercado pago' && desc==='cartão mp'));
+}
+
+function resetFutureCardsOnce(){
+  // Migração única: limpa lançamentos herdados de versões anteriores a partir de nov/2026.
+  // Depois desta limpeza, novos gastos lançados pelo usuário não são apagados.
+  const marker='minhas_financas_future_cards_v45_cleaned';
+  if(localStorage.getItem(marker)==='1') return;
+  let changed=false;
+  for(const e of expenses){
+    if(isFutureEmptyCard(e)){
+      if(Number(e.value||0)!==0 || (Array.isArray(e.cardItems) && e.cardItems.length)){
+        e.value=0;
+        e.cardItems=[];
+        changed=true;
+      }
+    }
+  }
+  if(changed) save();
+  localStorage.setItem(marker,'1');
+}
+
+function ensureMonthlyForMonth(ym){
+  // Cria somente a ocorrência do mês que está sendo visualizado.
+  // Isso evita gerar dezenas de cópias antecipadamente e impede duplicações.
+  const originals=expenses.filter(e=>e.monthly && !e.monthlyOccurrence && !e.cardPurchase && !String(e.desc||'').includes(' • parcela '));
+  if(!originals.length) return;
+  let changed=false;
+  for(const base of originals){
+    const day=Number(String(base.due).slice(8,10))||10;
+    const due=monthDate(ym,day);
+    if(sameMonthKey(base.due)===ym) continue;
+    const exists=expenses.some(x=>x.monthlyOccurrence && x.monthlyOrigin===base.id && sameMonthKey(x.due)===ym);
+    if(!exists){
+      const occurrence={...base,id:uid(),due,status:'pending',paidDate:'',monthlyOccurrence:true,monthlyOrigin:base.id,monthly:false};
+      // Rico e MP ficam zerados a partir de nov/2026 para receber novos gastos.
+      if(isFutureEmptyCard(occurrence, ym)){
+        occurrence.value=0;
+        occurrence.cardItems=[];
+      }
+      expenses.push(occurrence);
+      changed=true;
+    }
+  }
+  if(changed) save();
+}
+
+function createOrGetCardForMonth(sourceCard, ym){
+  let card=expenses.find(e=>sameMonthKey(e.due)===ym && e.method==='Cartão de crédito' && !e.cardPurchase &&
+    String(e.account||'').trim().toLowerCase()===String(sourceCard.account||'').trim().toLowerCase() &&
+    String(e.desc||'').trim().toLowerCase()===String(sourceCard.desc||'').trim().toLowerCase());
+  if(card) return card;
+
+  const day=new Date(sourceCard.due+'T12:00:00').getDate();
+  card={
+    id:uid(),
+    desc:sourceCard.desc,
+    value:0,
+    due:monthDate(ym,day),
+    category:sourceCard.category,
+    method:'Cartão de crédito',
+    account:sourceCard.account,
+    status:'pending',
+    paidDate:'',
+    note:'',
+    cardItems:[]
+  };
+  expenses.push(card);
+  return card;
+}
+
+function expandCardInstallments(card, item, sourceDueMonth){
+  const total=Math.max(1,Math.min(12,Number(item.installments||1)));
+  if(total<=1 || item.installmentId) return;
+
+  const groupId='ci_'+uid();
+  item.installmentId=groupId;
+  item.installmentNo=1;
+  item.installments=total;
+
+  // O valor informado é o valor de cada parcela. A compra aparece no mês atual
+  // e nas próximas parcelas, sempre dentro do mesmo cartão.
+  for(let i=1;i<total;i++){
+    const ym=monthAdd(sourceDueMonth,i);
+    const futureCard=createOrGetCardForMonth(card,ym);
+    if(!Array.isArray(futureCard.cardItems)) futureCard.cardItems=[];
+    const exists=futureCard.cardItems.some(x=>x.installmentId===groupId && Number(x.installmentNo)===i+1);
+    if(exists) continue;
+    futureCard.cardItems.push({
+      id:uid(),
+      desc:item.desc,
+      value:Number(item.value||0),
+      category:item.category,
+      date:monthDate(ym,new Date(card.due+'T12:00:00').getDate()),
+      installments:total,
+      locationName:item.locationName||'',
+      locationLat:item.locationLat||'',
+      locationLng:item.locationLng||'',
+      locationAddress:item.locationAddress||'',
+      installmentId:groupId,
+      installmentNo:i+1
+    });
+  }
+}
+
+function setLocationFields(name,lat,lng,address=''){
+ const n=document.getElementById('locationName'), la=document.getElementById('locationLat'), lo=document.getElementById('locationLng'), ad=document.getElementById('locationAddress');
+ if(n) n.value=name||n.value||''; if(la) la.value=lat||''; if(lo) lo.value=lng||''; if(ad) ad.value=address||name||''; refreshLocationDisplay();
+}
+function refreshLocationDisplay(){
+ const la=document.getElementById('locationLat'), lo=document.getElementById('locationLng'), st=document.getElementById('locationStatus'), co=document.getElementById('locationCoords');
+ if(!st||!co) return; const lat=la?.value||'', lng=lo?.value||'';
+ if(lat&&lng){ st.textContent='✅ Localização salva neste lançamento.'; co.textContent=`Coordenadas: ${Number(lat).toFixed(6)}, ${Number(lng).toFixed(6)}`; }
+ else { st.textContent=''; co.textContent=''; }
+}
+function clearLocation(){ setLocationFields('', '', '', ''); const n=document.getElementById('locationName'); if(n)n.value=''; const ad=document.getElementById('locationAddress'); if(ad)ad.value=''; }
+
+let locationPickerMap=null, locationPickerMarker=null, locationPickerSelected=null, locationPickerTarget='main', locationPickerCardButton=null, leafletLoaded=false;
+function loadLeaflet(cb){
+ if(window.L){leafletLoaded=true;cb();return;}
+ const existing=document.getElementById('leaflet-js');
+ if(existing){existing.addEventListener('load',()=>{leafletLoaded=true;cb();},{once:true});existing.addEventListener('error',()=>alert('Não foi possível carregar o mapa. Verifique sua internet e tente novamente.'),{once:true});return;}
+ const sc=document.createElement('script');sc.id='leaflet-js';sc.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';sc.crossOrigin='anonymous';
+ sc.onload=()=>{leafletLoaded=true;cb();};sc.onerror=()=>alert('Não foi possível carregar o mapa. Verifique sua internet e tente novamente.');document.head.appendChild(sc);
+}
+function openLocationPicker(target='main',btn=null){
+ locationPickerTarget=target;locationPickerCardButton=btn;locationPickerSelected=null;
+ const modal=document.getElementById('locationPickerModal');if(!modal)return;
+ modal.classList.add('show');modal.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';
+ const input=document.getElementById('mapSearchInput');
+ let currentName='',currentLat='',currentLng='';
+ if(target==='main'){
+   currentName=document.getElementById('locationName')?.value.trim()||'';currentLat=document.getElementById('locationLat')?.value||'';currentLng=document.getElementById('locationLng')?.value||'';
+ }else if(btn){
+   const row=btn.closest('.card-item-row');currentName=row?.querySelector('.ci-location-name')?.value.trim()||'';currentLat=row?.querySelector('.ci-location-lat')?.value||'';currentLng=row?.querySelector('.ci-location-lng')?.value||'';
+ }
+ if(input)input.value=currentName;
+ const results=document.getElementById('mapSearchResults');if(results)results.innerHTML='';
+ const selected=document.getElementById('locationPickerSelected');if(selected)selected.textContent=currentName?(currentLat&&currentLng?`📍 ${currentName} — ponto já salvo.`:`🔎 ${currentName}`):'Digite um estabelecimento ou toque no mapa.';
+ loadLeaflet(()=>initLocationPickerMap(currentLat,currentLng,currentName));
+}
+function initLocationPickerMap(lat,lng,name){
+ const el=document.getElementById('locationPickerMap');if(!el)return;
+ if(locationPickerMap){locationPickerMap.remove();locationPickerMap=null;locationPickerMarker=null;}
+ let center=[-15.78,-47.93],zoom=5;
+ if(lat&&lng&&Number.isFinite(Number(lat))&&Number.isFinite(Number(lng))){center=[Number(lat),Number(lng)];zoom=17;}
+ locationPickerMap=L.map(el,{tap:true}).setView(center,zoom);
+ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(locationPickerMap);
+ if(lat&&lng)setPickerMarker(Number(lat),Number(lng),name||'Local salvo');
+ locationPickerMap.on('click',e=>selectPickerPoint(e.latlng.lat,e.latlng.lng,'Ponto escolhido no mapa'));
+ setTimeout(()=>locationPickerMap.invalidateSize(),250);
+ if(name&&!lat&&!lng)searchInsideLocationPicker();
+}
+function setPickerMarker(lat,lng,name){
+ if(!locationPickerMap)return;
+ if(locationPickerMarker)locationPickerMarker.setLatLng([lat,lng]);else locationPickerMarker=L.marker([lat,lng],{draggable:true}).addTo(locationPickerMap);
+ locationPickerMarker.bindPopup(name||'Local selecionado').openPopup();
+ locationPickerMarker.off('dragend').on('dragend',()=>{const p=locationPickerMarker.getLatLng();selectPickerPoint(p.lat,p.lng,'Ponto ajustado no mapa');});
+ locationPickerSelected={lat,lng,name:name||''};
+ const el=document.getElementById('locationPickerSelected');if(el)el.textContent=`📍 ${name||'Local selecionado'} — ${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+}
+async function selectPickerPoint(lat,lng,fallbackName='Ponto escolhido no mapa'){
+ setPickerMarker(lat,lng,fallbackName);
+ try{
+   const r=await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lng)}&zoom=18&addressdetails=1`,{headers:{'Accept':'application/json'}});
+   if(r.ok){const d=await r.json();const a=d.address||{};const label=d.display_name||[a.amenity,a.shop,a.tourism,a.road,a.suburb,a.city||a.town||a.village,a.state].filter(Boolean).join(', ');if(label)setPickerMarker(lat,lng,label);}
+ }catch(e){}
+}
+async function searchInsideLocationPicker(){
+ const q=(document.getElementById('mapSearchInput')?.value||'').trim();const results=document.getElementById('mapSearchResults');
+ if(!q){if(results)results.textContent='Digite o nome do estabelecimento ou endereço.';return;}
+ if(!locationPickerMap){if(results)results.textContent='Aguarde o mapa carregar.';return;}
+ results.textContent='🔎 Pesquisando...';
+ try{
+   const r=await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=7&countrycodes=br&addressdetails=1&q=${encodeURIComponent(q)}`,{headers:{'Accept':'application/json'}});
+   if(!r.ok)throw new Error('search');const arr=await r.json();results.innerHTML='';
+   if(!arr.length){results.textContent='Nenhum resultado. Tente nome + cidade, por exemplo: Casa Grande Sooretama ES.';return;}
+   arr.forEach(item=>{
+     const b=document.createElement('button');b.type='button';b.className='map-result';
+     const title=item.display_name.split(',').slice(0,2).join(', ');b.innerHTML=`${esc(title)}<small>${esc(item.display_name)}</small>`;
+     b.onclick=()=>{const la=Number(item.lat),lo=Number(item.lon);locationPickerMap.setView([la,lo],17);setPickerMarker(la,lo,item.display_name);results.innerHTML='';};results.appendChild(b);
+   });
+   const first=arr[0],la=Number(first.lat),lo=Number(first.lon);locationPickerMap.setView([la,lo],16);setPickerMarker(la,lo,first.display_name);
+ }catch(e){results.textContent='Não foi possível pesquisar agora. Toque diretamente no mapa ou tente novamente.';}
+}
+function centerPickerBrazil(){if(locationPickerMap)locationPickerMap.setView([-15.78,-47.93],5);}
+function usePickerCurrentLocation(){
+ const selected=document.getElementById('locationPickerSelected');
+ if(!navigator.geolocation){if(selected)selected.textContent='⚠️ Este navegador não disponibiliza GPS.';return;}
+ if(selected)selected.textContent='📍 Obtendo sua localização...';
+ navigator.geolocation.getCurrentPosition(async pos=>{
+   const lat=pos.coords.latitude,lng=pos.coords.longitude;
+   if(locationPickerMap)locationPickerMap.setView([lat,lng],18);await selectPickerPoint(lat,lng,'Minha localização');
+ },err=>{if(selected)selected.textContent=locationErrorMessage(err);},{enableHighAccuracy:true,timeout:20000,maximumAge:0});
+}
+function confirmLocationPicker(){
+ if(!locationPickerSelected){alert('Escolha um ponto no mapa primeiro.');return;}
+ const {lat,lng,name}=locationPickerSelected;
+ if(locationPickerTarget==='main'){
+   const label=name||document.getElementById('locationName').value||'Local selecionado no mapa';
+   document.getElementById('locationName').value=label;document.getElementById('locationLat').value=String(lat);document.getElementById('locationLng').value=String(lng);document.getElementById('locationAddress').value=label;refreshLocationDisplay();
+ }else if(locationPickerCardButton){
+   const row=locationPickerCardButton.closest('.card-item-row');
+   if(row){row.querySelector('.ci-location-name').value=name||row.querySelector('.ci-location-name').value||'Local selecionado no mapa';row.querySelector('.ci-location-lat').value=String(lat);row.querySelector('.ci-location-lng').value=String(lng);const out=row.querySelector('.ci-location-coords');if(out)out.textContent=`✅ Local selecionado: ${lat.toFixed(6)}, ${lng.toFixed(6)}`;}
+ }
+ closeLocationPicker();
+}
+function closeLocationPicker(){
+ const modal=document.getElementById('locationPickerModal');if(modal){modal.classList.remove('show');modal.setAttribute('aria-hidden','true');}
+ document.body.style.overflow='';
+ if(locationPickerMap){locationPickerMap.remove();locationPickerMap=null;locationPickerMarker=null;}
+ locationPickerSelected=null;locationPickerCardButton=null;
+}
+
+function searchLocationOnMap(){
+ const n=document.getElementById('locationName');
+ const name=(n?.value||'').trim();
+ const st=document.getElementById('locationStatus');
+ if(!name){ if(st)st.textContent='🗺️ Digite primeiro o nome do estabelecimento.'; n?.focus(); return; }
+ const url='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(name);
+ window.open(url,'_blank','noopener,noreferrer');
+ if(st)st.textContent='🗺️ Pesquisa aberta no Google Maps. O nome informado continua salvo neste lançamento.';
+}
+function showLocationHelp(){
+ const p=document.getElementById('locationHelp'); if(p)p.style.display=p.style.display==='none'?'block':'none';
+}
+function locationErrorMessage(err){
+ if(!window.isSecureContext) return '⚠️ O GPS não pode ser usado com segurança neste arquivo local. Digite o estabelecimento e use 🗺️ Pesquisar no mapa.';
+ const msgs={1:'⚠️ O Android/Chrome negou o GPS. Você pode digitar o estabelecimento e usar 🗺️ Pesquisar no mapa.',2:'⚠️ Não foi possível determinar sua localização. Verifique se a Localização do celular está ligada ou use 🗺️ Pesquisar no mapa.',3:'⚠️ A localização demorou demais. Tente novamente ou use 🗺️ Pesquisar no mapa.'};
+ return msgs[err?.code]||'⚠️ Não foi possível obter o GPS. Você pode informar o estabelecimento e pesquisar no mapa.';
+}
+function useCurrentLocation(){
+ const st=document.getElementById('locationStatus');
+ if(!navigator.geolocation){ if(st)st.textContent='⚠️ Este navegador não disponibiliza localização.'; return; }
+ if(st)st.textContent='📍 Solicitando localização...';
+ navigator.geolocation.getCurrentPosition(async pos=>{
+   const lat=pos.coords.latitude, lng=pos.coords.longitude;
+   let label=document.getElementById('locationName')?.value.trim()||'';
+   try{const r=await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lng)}&zoom=18&addressdetails=1`,{headers:{'Accept':'application/json'}});if(r.ok){const d=await r.json();label=d.display_name||label;}}catch(e){}
+   setLocationFields(label,String(lat),String(lng),label);
+   if(st)st.textContent='✅ Localização salva neste lançamento.';
+ },err=>{ if(st)st.textContent=locationErrorMessage(err); },{enableHighAccuracy:true,timeout:20000,maximumAge:0});
+}
+
+function searchCardItemOnMap(btn){
+ const row=btn.closest('.card-item-row'); if(!row)return;
+ const input=row.querySelector('.ci-location-name');
+ const name=(input?.value||'').trim();
+ const out=row.querySelector('.ci-location-coords');
+ if(!name){ if(out)out.textContent='🗺️ Digite primeiro o nome do estabelecimento.'; input?.focus(); return; }
+ const url='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(name);
+ window.open(url,'_blank','noopener,noreferrer');
+ if(out)out.textContent='🗺️ Pesquisa aberta no Google Maps.';
+}
+
+function useCardItemLocation(btn){
+ if(!navigator.geolocation){ alert('Este navegador não disponibiliza localização.'); return; }
+ const row=btn.closest('.card-item-row'); if(!row)return;
+ const out=row.querySelector('.ci-location-coords'); out.textContent='📍 Solicitando localização...';
+ navigator.geolocation.getCurrentPosition(pos=>{
+   row.querySelector('.ci-location-lat').value=pos.coords.latitude; row.querySelector('.ci-location-lng').value=pos.coords.longitude;
+   out.textContent=`✅ Localização salva: ${pos.coords.latitude.toFixed(6)}, ${pos.coords.longitude.toFixed(6)}`;
+ },err=>{out.textContent=locationErrorMessage(err);},{enableHighAccuracy:true,timeout:20000,maximumAge:0});
+}
+
+function saveExpense(ev){
+ ev.preventDefault();
+ const id=document.getElementById('editId').value;
+ const existing=id?expenses.find(x=>x.id===id):null;
+ const dueDate=document.getElementById('due').value;
+ const installments=Math.max(1,Number(document.getElementById('installments').value||1));
+
+ const base={
+   id:id||uid(),
+   desc:document.getElementById('desc').value.trim(),
+   value:Number(document.getElementById('value').value),
+   due:dueDate,
+   category:document.getElementById('category').value,
+   method:document.getElementById('method').value,
+   account:document.getElementById('account').value.trim(),
+   status:document.getElementById('status').value,
+   paidDate:document.getElementById('paidDate').value,
+   note:document.getElementById('note').value.trim(),
+   locationName:document.getElementById('locationName').value.trim(),
+   locationLat:document.getElementById('locationLat').value,
+   locationLng:document.getElementById('locationLng').value,
+   locationAddress:document.getElementById('locationAddress')?.value||'',
+   cardItems: existing?.cardItems || [],
+   receiptItems: existing?.receiptItems || [],
+   receiptImported: existing?.receiptImported || false
+ };
+ if(id && existing?.monthlyOccurrence){ base.monthlyOccurrence=true; base.monthlyOrigin=existing.monthlyOrigin; base.monthly=false; }
+ else if(id && existing?.monthly){ base.monthly=true; }
+
+ if(cardIsEditable(base)){
+   base.cardItems=collectCardItems();
+ }
+
+ if(id){
+   expenses=expenses.map(x=>x.id===id?base:x);
+   // Novas compras parceladas são expandidas somente quando o usuário as lança.
+   if(cardIsEditable(base)){
+     const sourceMonth=sameMonthKey(base.due);
+     base.cardItems.forEach(item=>expandCardInstallments(base,item,sourceMonth));
+   }
+ }else if(installments>1){
+   const cents=Math.round(base.value*100);
+   const q=Math.floor(cents/installments), rem=cents%installments;
+   const [y0,m0]=dueDate.slice(0,7).split('-').map(Number);
+   for(let i=0;i<installments;i++){
+     const d=new Date(y0,m0-1+i,1);
+     const last=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();
+     const originalDay=new Date(dueDate+'T12:00:00').getDate();
+     const day=Math.min(originalDay,last);
+     const valCents=q+(i<rem?1:0);
+     expenses.push({...base,id:uid(),value:valCents/100,due:`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`,desc:`${base.desc} • parcela ${i+1}/${installments}`,status:i===0?base.status:'pending',paidDate:i===0?base.paidDate:''});
+   }
+ }else{
+   base.monthly=true;
+   expenses.push(base);
+ }
+ save(); closeModal(); render();
+}
+
+// Leitura de cupom fiscal por OCR. Os produtos ficam anexados à compra e não entram novamente no total.
+let receiptOCRText='';
+function openReceiptReader(){
+ document.getElementById('receiptBack').classList.add('show');
+ document.getElementById('receiptReview').style.display='none';
+ document.getElementById('receiptProgress').textContent='Selecione uma foto para começar.';
+ document.getElementById('receiptImage').value='';
+ document.getElementById('receiptPreview').style.display='none';
+ document.getElementById('receiptItemsEditor').innerHTML='';
+ document.getElementById('receiptQRPanel').style.display='none';document.getElementById('receiptQRResult').style.display='none';if(document.getElementById('receiptQRManual'))document.getElementById('receiptQRManual').value='';
+ receiptOCRText='';
+}
+function closeReceiptReader(){stopReceiptQRScanner();document.getElementById('receiptBack').classList.remove('show');}
+// Leitor de QR Code: tenta câmera ao vivo com BarcodeDetector ou jsQR; fallback permite fotografar só o QR.
+let receiptQRStream=null, receiptQRTimer=null, receiptQRBusy=false, receiptQRCanvas=null, receiptQRJsqrReady=false;
+async function loadReceiptJsQR(){
+ if(window.jsQR){receiptQRJsqrReady=true;return;}
+ await new Promise((resolve,reject)=>{const existing=document.querySelector('script[data-receipt-jsqr="1"]');if(existing){existing.addEventListener('load',resolve,{once:true});existing.addEventListener('error',()=>reject(new Error('Não consegui carregar o leitor de QR Code. Confira a internet.')),{once:true});return;}const sc=document.createElement('script');sc.dataset.receiptJsqr='1';sc.src='https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js';sc.onload=resolve;sc.onerror=()=>reject(new Error('Não consegui carregar o leitor de QR Code. Confira a internet.'));document.head.appendChild(sc);});
+ receiptQRJsqrReady=!!window.jsQR;if(!receiptQRJsqrReady)throw new Error('O leitor de QR Code não carregou.');
+}
+async function startReceiptQRScanner(){
+ const panel=document.getElementById('receiptQRPanel'),video=document.getElementById('receiptQRVideo'),status=document.getElementById('receiptQRStatus'),result=document.getElementById('receiptQRResult');
+ panel.style.display='block';result.style.display='none';status.textContent='Preparando leitor de QR Code...';
+ stopReceiptQRScanner();
+ try{await loadReceiptJsQR();}catch(e){status.textContent=(e.message||'Falha ao preparar o leitor.')+' Você ainda pode escolher uma foto nítida do QR Code.';showReceiptQRPhotoFallback(panel);return;}
+ if(!navigator.mediaDevices?.getUserMedia){status.textContent='Este modo de abertura do arquivo não libera a câmera ao vivo. Toque abaixo para fotografar o QR Code; vamos decodificar a imagem.';showReceiptQRPhotoFallback(panel);return;}
+ try{
+  receiptQRBusy=false;receiptQRCanvas=document.createElement('canvas');const ctx=receiptQRCanvas.getContext('2d',{willReadFrequently:true});
+  receiptQRStream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}}});
+  video.srcObject=receiptQRStream;video.style.display='block';video.setAttribute('playsinline','');video.muted=true;await video.play();
+  status.textContent='Câmera aberta. Aponte para o QR Code e mantenha-o inteiro dentro da imagem.';
+  const scan=async()=>{
+   if(!receiptQRStream||receiptQRBusy)return;
+   if(video.readyState>=2&&video.videoWidth&&video.videoHeight){
+    try{
+     let w=video.videoWidth,h=video.videoHeight,scale=Math.min(1,1000/Math.max(w,h));receiptQRCanvas.width=Math.round(w*scale);receiptQRCanvas.height=Math.round(h*scale);ctx.drawImage(video,0,0,receiptQRCanvas.width,receiptQRCanvas.height);
+     let raw='';
+     if('BarcodeDetector' in window){try{const detector=scan.detector||(scan.detector=new BarcodeDetector({formats:['qr_code']}));const codes=await detector.detect(video);if(codes?.length)raw=codes[0].rawValue||'';}catch(e){}}
+     if(!raw&&window.jsQR){const code=window.jsQR(ctx.getImageData(0,0,receiptQRCanvas.width,receiptQRCanvas.height).data,receiptQRCanvas.width,receiptQRCanvas.height,{inversionAttempts:'attemptBoth'});if(code)raw=code.data;}
+     if(raw){receiptQRBusy=true;handleReceiptQRValue(raw);return;}
+    }catch(e){}
+   }
+   if(receiptQRStream)receiptQRTimer=setTimeout(scan,220);
+  };scan();
+ }catch(err){stopReceiptQRScanner();status.textContent='Não consegui abrir a câmera ao vivo (permissão ou navegador). Use o botão abaixo para fotografar o QR Code e fazer a leitura.';showReceiptQRPhotoFallback(panel);}
+}
+function showReceiptQRPhotoFallback(panel){
+ let input=document.getElementById('receiptQRPhotoInput');
+ if(!input){const wrap=document.createElement('div');wrap.id='receiptQRPhotoFallback';wrap.style.cssText='margin-top:10px;padding:10px;background:#fff;border-radius:10px';wrap.innerHTML='<label for="receiptQRPhotoInput" style="display:block;font-weight:700;margin-bottom:6px">📷 Fotografar / escolher imagem do QR Code</label><input id="receiptQRPhotoInput" type="file" accept="image/*" capture="environment" style="width:100%"><div class="small" style="margin-top:6px">Enquadre o QR Code inteiro, de perto e com boa iluminação.</div>';panel.appendChild(wrap);input=wrap.querySelector('input');input.addEventListener('change',processReceiptQRImage);
+ }
+ input.value='';
+}
+function stopReceiptQRScanner(){if(receiptQRTimer){clearTimeout(receiptQRTimer);receiptQRTimer=null;}if(receiptQRStream){receiptQRStream.getTracks().forEach(t=>t.stop());receiptQRStream=null;}const v=document.getElementById('receiptQRVideo');if(v){v.pause();v.srcObject=null;v.style.display='none';}receiptQRBusy=false;}
+async function processReceiptQRImage(event){
+ const file=event.target.files?.[0];if(!file)return;
+ const status=document.getElementById('receiptQRStatus');status.textContent='Lendo QR Code da imagem...';
+ let objectUrl='';
+ try{
+  await loadReceiptJsQR();
+  const img=new Image();objectUrl=URL.createObjectURL(file);img.src=objectUrl;await new Promise((res,rej)=>{img.onload=res;img.onerror=()=>rej(new Error('Não consegui abrir essa imagem.'));});
+  const canvas=document.createElement('canvas'),ctx=canvas.getContext('2d',{willReadFrequently:true});const scale=Math.min(1,2200/Math.max(img.naturalWidth,img.naturalHeight));canvas.width=Math.max(1,Math.round(img.naturalWidth*scale));canvas.height=Math.max(1,Math.round(img.naturalHeight*scale));ctx.drawImage(img,0,0,canvas.width,canvas.height);
+  let code=window.jsQR(ctx.getImageData(0,0,canvas.width,canvas.height).data,canvas.width,canvas.height,{inversionAttempts:'attemptBoth'});
+  if(!code && (canvas.width>700||canvas.height>700)){
+   // Retry at full source resolution; QR codes often occupy only a small part of the photo.
+   canvas.width=img.naturalWidth;canvas.height=img.naturalHeight;ctx.drawImage(img,0,0);code=window.jsQR(ctx.getImageData(0,0,canvas.width,canvas.height).data,canvas.width,canvas.height,{inversionAttempts:'attemptBoth'});
+  }
+  if(!code)throw new Error('Não encontrei um QR Code legível. Aproxime a câmera, deixe o código inteiro visível e evite reflexos; se fotografou o cupom todo, tente recortar a área do QR Code.');
+  handleReceiptQRValue(code.data);
+ }catch(e){status.textContent='⚠️ '+(e.message||'Falha ao ler QR Code.');}
+ finally{if(objectUrl)URL.revokeObjectURL(objectUrl);}
+}
+function processReceiptQRManual(){
+ const raw=document.getElementById('receiptQRManual').value.trim();
+ if(!raw){document.getElementById('receiptQRStatus').textContent='Cole primeiro o link ou o conteúdo que apareceu ao ler o QR Code com a câmera do celular.';return;}
+ handleReceiptQRValue(raw);
+}
+function handleReceiptQRValue(raw){
+ stopReceiptQRScanner();const status=document.getElementById('receiptQRStatus'),result=document.getElementById('receiptQRResult');
+ let cleaned=String(raw||'').trim().replace(/^['"]|['"]$/g,'');
+ try{cleaned=decodeURIComponent(cleaned.replace(/\+/g,'%20'));}catch(e){}
+ let url='';
+ // QR codes fiscais can contain a URL directly or a URL embedded in a longer payload.
+ const candidates=[cleaned,...(cleaned.match(/https?:\/\/[^\s<>"']+/ig)||[])];
+ for(let candidate of candidates){try{candidate=candidate.trim().replace(/[),.;]+$/,'');const u=new URL(candidate);if(['http:','https:'].includes(u.protocol)){url=u.href;break;}}catch(e){}}
+ if(!url){const www=cleaned.match(/(?:^|\s)(www\.[^\s<>"']+)/i);if(www){try{url=new URL('https://'+www[1].replace(/[),.;]+$/,'')).href;}catch(e){}}}
+ let chave='';const m=cleaned.match(/\b\d{44}\b/)||cleaned.match(/(?:chNFe|chave|chaveAcesso)[=:| ]+(\d{44})/i);if(m)chave=m[1]||m[0];
+ result.style.display='block';
+ if(url){
+  status.textContent='QR Code reconhecido!';
+  result.innerHTML='<div style="font-weight:800;color:#166534;margin-bottom:6px">Endereço encontrado</div><div class="small" style="margin-bottom:8px">Abra a consulta fiscal. Se o site mostrar a nota, confira os dados; a importação automática de produtos depende do portal da SEFAZ.</div><a href="'+esc(url)+'" target="_blank" rel="noopener noreferrer" style="display:block;text-align:center;background:#15803d;color:white;padding:11px;border-radius:10px;text-decoration:none;font-weight:800">Abrir consulta da nota fiscal ↗</a><div class="small" style="margin-top:8px;overflow-wrap:anywhere">'+esc(url)+'</div>'+(chave?'<div class="small" style="margin-top:8px">Chave de acesso: '+esc(chave)+'</div>':'');
+  document.getElementById('receiptProgress').textContent='Endereço do QR Code reconhecido. Abra a consulta para conferir os dados da nota.';
+ }else{
+  status.textContent=chave?'A chave da nota foi identificada, mas não veio um endereço de consulta junto.':'O conteúdo foi lido, mas não contém um link reconhecível. Você pode abrir o link pela câmera do celular e colá-lo aqui.';
+  result.innerHTML='<div class="small" style="margin-bottom:6px">Conteúdo lido (pode copiar e compartilhar):</div><textarea id="receiptQRRawText" readonly rows="4" style="width:100%;box-sizing:border-box;margin-top:6px">'+esc(cleaned)+'</textarea><button type="button" class="cancel" style="margin-top:6px" onclick="copyReceiptQRRaw()">Copiar conteúdo</button>'+(chave?'<div class="small" style="margin-top:8px">Chave de acesso: '+esc(chave)+'</div>':'');
+ }
+}
+function copyReceiptQRRaw(){const el=document.getElementById('receiptQRRawText');if(!el)return;el.select();try{document.execCommand('copy');document.getElementById('receiptQRStatus').textContent='Conteúdo selecionado para copiar.';}catch(e){document.getElementById('receiptQRStatus').textContent='Selecione o texto e use Copiar no celular.';}}
+
+function receiptDateISO(text){
+ const m=String(text||'').match(/\b(\d{2})[\/.-](\d{2})[\/.-](\d{2,4})\b/);
+ if(!m)return '';
+ let y=Number(m[3]); if(y<100)y+=2000;
+ const d=new Date(y,Number(m[2])-1,Number(m[1]));
+ if(d.getFullYear()!==y||d.getMonth()!==Number(m[2])-1||d.getDate()!==Number(m[1]))return '';
+ return `${y}-${String(Number(m[2])).padStart(2,'0')}-${String(Number(m[1])).padStart(2,'0')}`;
+}
+function receiptNumber(str){
+ let t=String(str||'').replace(/R\$\s*/gi,'').replace(/\s/g,'');
+ if(t.includes(',')&&t.includes('.')) t=t.replace(/\./g,'').replace(',','.');
+ else if(t.includes(',')) t=t.replace(',','.');
+ const n=Number(t); return Number.isFinite(n)?n:0;
+}
+function parseReceiptText(text){
+ const lines=String(text||'').split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+ const totalLines=lines.filter(x=>/(valor\s+a\s+pagar|total\s*(?:a\s*pagar|da\s*compra|R\$|:)|valor\s*total|total\s*geral)/i.test(x));
+ let total=0;
+ for(const line of totalLines.slice().reverse()){
+  const vals=[...line.matchAll(/(?:R\$\s*)?\d{1,3}(?:\.\d{3})*,\d{2}|(?:R\$\s*)?\d+,\d{2}/g)].map(m=>receiptNumber(m[0]));
+  if(vals.length){total=vals[vals.length-1];if(total>0)break;}
+ }
+ if(!total){
+  const vals=[...String(text).matchAll(/(?:R\$\s*)?\d{1,3}(?:\.\d{3})*,\d{2}|(?:R\$\s*)?\d+,\d{2}/g)].map(m=>receiptNumber(m[0]));
+  total=vals.length?Math.max(...vals):0;
+ }
+ let store='';
+ for(const line of lines.slice(0,7)){
+  if(line.length>=3 && !/(CNPJ|CPF|IE\s*:|DANFE|DOCUMENTO AUXILIAR|NOTA FISCAL|CUPOM FISCAL|CONSUMIDOR|SAT|NFC-E|\d{2}[\/.-]\d{2}[\/.-]\d{2,4})/i.test(line)){store=line.slice(0,90);break;}
+ }
+ const date=receiptDateISO(text);
+ const items=[];
+ for(const line of lines){
+  if(/(TOTAL|VALOR A PAGAR|VALOR TOTAL|TROCO|DINHEIRO|CARTAO|CARTÃO|PIX|CNPJ|CPF|CONSUMIDOR|DOCUMENTO AUXILIAR|CHAVE DE ACESSO|CONSULTE)/i.test(line))continue;
+  const matches=[...line.matchAll(/(?:R\$\s*)?\d{1,3}(?:\.\d{3})*,\d{2}|(?:R\$\s*)?\d+,\d{2}/g)];
+  if(!matches.length)continue;
+  const last=matches[matches.length-1];
+  const val=receiptNumber(last[0]);
+  let desc=line.slice(0,last.index).replace(/^\s*\d{1,4}\s+/,'').replace(/\s+[xX]\s*\d+[,.]?\d*\s*$/,'').replace(/[|*]+/g,' ').trim();
+  if(desc.length>=2 && val>0 && val<=Math.max(total*1.5,10000) && !/^\d+$/.test(desc)){
+   desc=desc.replace(/\s{2,}/g,' ').slice(0,100);
+   if(!items.some(x=>x.desc.toLowerCase()===desc.toLowerCase()&&x.value===val))items.push({desc,value:val});
+  }
+ }
+ return {store,date,total,items};
+}
+function loadTesseract(){
+ return new Promise((resolve,reject)=>{
+  if(window.Tesseract)return resolve(window.Tesseract);
+  const script=document.createElement('script');script.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+  script.onload=()=>window.Tesseract?resolve(window.Tesseract):reject(new Error('Biblioteca OCR indisponível.'));
+  script.onerror=()=>reject(new Error('Não consegui carregar a leitura OCR. Confira a conexão com a internet e tente novamente.'));
+  document.head.appendChild(script);
+ });
+}
+async function processReceiptImage(event){
+ const file=event.target.files?.[0];if(!file)return;
+ if(!file.type.startsWith('image/')){alert('Escolha uma imagem do cupom fiscal.');return;}
+ const preview=document.getElementById('receiptPreview');preview.src=URL.createObjectURL(file);preview.style.display='block';
+ const progress=document.getElementById('receiptProgress');progress.style.display='block';progress.textContent='Preparando a leitura do cupom...';
+ try{
+  const T=await loadTesseract();
+  const result=await T.recognize(file,'por',{logger:m=>{if(m.status==='recognizing text')progress.textContent=`Lendo o cupom... ${Math.round((m.progress||0)*100)}%`;}});
+  receiptOCRText=result.data.text||'';
+  const parsed=parseReceiptText(receiptOCRText);
+  document.getElementById('receiptStore').value=parsed.store||'Compra do cupom fiscal';
+  document.getElementById('receiptTotal').value=parsed.total?parsed.total.toFixed(2):'';
+  document.getElementById('receiptDate').value=parsed.date||isoDate(new Date());
+  document.getElementById('receiptCategory').value='Alimentação';
+  document.getElementById('receiptMethod').value='Dinheiro';
+  document.getElementById('receiptAccount').value='';
+  document.getElementById('receiptStatus').value='paid';
+  document.getElementById('receiptItemsEditor').innerHTML='';
+  parsed.items.forEach(addReceiptItemRow);
+  document.getElementById('receiptItemCount').textContent=`${parsed.items.length} identificado(s)`;
+  document.getElementById('receiptReview').style.display='block';
+  progress.textContent=`Leitura concluída. Confira o total e os ${parsed.items.length} produto(s) identificados antes de salvar.`;
+  if(!parsed.total)progress.textContent+=' Não consegui identificar o total com segurança; digite-o manualmente.';
+ }catch(err){progress.textContent='⚠️ '+(err?.message||'Falha na leitura.')+' Você ainda pode conferir a foto e tentar novamente.';}
+}
+function addReceiptItemRow(item={}){
+ const wrap=document.getElementById('receiptItemsEditor');
+ const row=document.createElement('div');row.className='card-item-row';
+ row.innerHTML=`<div class="field full"><label>Produto</label><input class="ri-desc" value="${esc(item.desc||'')}" placeholder="Nome do produto"></div><div class="field"><label>Valor (R$)</label><input class="ri-value" type="number" min="0" step="0.01" value="${item.value!=null?Number(item.value).toFixed(2):''}" placeholder="0,00"></div><button type="button" class="remove-card-item" onclick="this.closest('.card-item-row').remove();updateReceiptItemCount()">Remover produto</button>`;
+ wrap.appendChild(row);updateReceiptItemCount();
+}
+function updateReceiptItemCount(){const n=document.querySelectorAll('#receiptItemsEditor .card-item-row').length;const el=document.getElementById('receiptItemCount');if(el)el.textContent=`${n} produto(s)`;}
+function saveReceiptExpense(){
+ const desc=document.getElementById('receiptStore').value.trim()||'Compra por cupom fiscal';
+ const value=Number(document.getElementById('receiptTotal').value);
+ const due=document.getElementById('receiptDate').value||isoDate(new Date());
+ if(!(value>0)){alert('Informe ou corrija o valor total do cupom antes de salvar.');return;}
+ const receiptItems=[...document.querySelectorAll('#receiptItemsEditor .card-item-row')].map(row=>({desc:row.querySelector('.ri-desc').value.trim(),value:Number(row.querySelector('.ri-value').value||0)})).filter(x=>x.desc&&x.value>=0);
+ const method=document.getElementById('receiptMethod').value;
+ const entry={id:uid(),desc,value,due,category:document.getElementById('receiptCategory').value,method,account:document.getElementById('receiptAccount').value.trim(),status:document.getElementById('receiptStatus').value,paidDate:document.getElementById('receiptStatus').value==='paid'?due:'',note:'Importado por foto de cupom fiscal',locationName:desc,locationLat:'',locationLng:'',locationAddress:'',cardItems:[],receiptItems,receiptImported:true,monthly:true};
+ expenses.push(entry);save();closeReceiptReader();
+ const month=due.slice(0,7);if(document.getElementById('monthSelect').value!==month){document.getElementById('monthSelect').value=month;}
+ render();alert(`Compra salva: ${money(value)}. O orçamento contabiliza somente o total do cupom; os ${receiptItems.length} produtos ficam disponíveis nos detalhes.`);
+}
+function showReceiptDetails(id){
+ const e=expenses.find(x=>x.id===id);if(!e||!Array.isArray(e.receiptItems))return;
+ document.getElementById('purchaseDetailTitle').textContent='🧾 '+e.desc;
+ document.getElementById('purchaseDetailSubtitle').textContent=`${new Date(e.due+'T12:00:00').toLocaleDateString('pt-BR')} • ${e.receiptItems.length} produto(s)`;
+ const rows=e.receiptItems.map(x=>`<div class="card-purchase"><div class="card-purchase-main"><div class="card-purchase-name">${esc(x.desc)}</div></div><b>${money(x.value)}</b></div>`).join('');
+ document.getElementById('purchaseDetailBody').innerHTML=`<div class="purchase-detail-grid"><div class="purchase-detail-box"><div class="label">Total lançado no orçamento</div><div class="value">${money(e.value)}</div></div><div class="purchase-detail-box"><div class="label">Soma dos produtos reconhecidos</div><div class="value">${money(e.receiptItems.reduce((a,x)=>a+Number(x.value||0),0))}</div></div></div><div class="purchase-detail-note">Os produtos abaixo são detalhes do cupom. Eles não são somados novamente ao orçamento.</div><div class="card-purchase-list">${rows||'<div class="empty">Nenhum produto detalhado.</div>'}</div>`;
+ document.getElementById('purchaseDetailBack').classList.add('show');
+}
+
+function editExpense(id){openModal(id)}
+function deleteExpense(id){
+ const e=expenses.find(x=>x.id===id);
+ if(!e) return;
+ if(confirm(`Excluir "${e.desc}" de ${money(e.value)}?`)){
+   expenses=expenses.filter(x=>x.id!==id);
+   save(); render();
+ }
+}
+function sendWhatsApp(){
+ const month=currentMonth();
+ const arr=expenses.filter(e=>e.due.startsWith(month)).sort((a,b)=>a.due.localeCompare(b.due));
+ if(!arr.length){alert('Não há lançamentos neste mês.');return;}
+ const total=arr.reduce((a,e)=>a+effectiveValue(e),0);
+ const paid=arr.filter(e=>e.status==='paid').reduce((a,e)=>a+effectiveValue(e),0);
+ const pending=total-paid;
+ const label=new Date(month+'-01T12:00:00').toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+
+ const groups = {
+   10: arr.filter(e=>new Date(e.due+'T12:00:00').getDate()===10),
+   25: arr.filter(e=>new Date(e.due+'T12:00:00').getDate()===25),
+   other: arr.filter(e=>![10,25].includes(new Date(e.due+'T12:00:00').getDate()))
+ };
+
+ let msg=`💰 *MINHAS FINANÇAS*\\n`;
+ msg+=`━━━━━━━━━━━━━━━━━━\\n`;
+ msg+=`📅 *${label.toUpperCase()}*\\n\\n`;
+ msg+=`💵 *RESUMO*\\n`;
+ msg+=`Total: ${money(total)}\\n`;
+ msg+=`✅ Pago: ${money(paid)}\\n`;
+ msg+=`⏳ A pagar: ${money(pending)}\\n`;
+
+ function addGroup(title, emoji, list){
+   if(!list.length) return;
+   msg+=`\\n${emoji} *${title}*\\n`;
+   msg+=`──────────────────\\n`;
+   list.forEach(e=>{
+     const day=new Date(e.due+'T12:00:00').getDate();
+     const status=e.status==='paid'?'✅':'⏳';
+     msg+=`${status} *${e.desc}*\\n`;
+     msg+=`   📅 ${String(day).padStart(2,'0')}/${String(new Date(e.due+'T12:00:00').getMonth()+1).padStart(2,'0')}  •  💰 ${money(e.value)}\\n`;
+     if(e.account) msg+=`   💳 ${e.account}\\n`;
+     if(e.note) msg+=`   📝 ${e.note}\\n`;
+     msg+=`\\n`;
+   });
+ }
+ addGroup('VENCIMENTOS DIA 10','🟠',groups[10]);
+ addGroup('VENCIMENTOS DIA 25','🔵',groups[25]);
+ addGroup('OUTRAS DATAS','🟣',groups.other);
+
+ msg+=`━━━━━━━━━━━━━━━━━━\\n`;
+ msg+=`📌 *Total a pagar: ${money(pending)}*`;
+
+ window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+}
+
+function generatePDF(){
+ const month=currentMonth();
+ const label=new Date(month+'-01T12:00:00').toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+ document.getElementById('printMonth').textContent=label.charAt(0).toUpperCase()+label.slice(1);
+ window.print();
+}
+
+function escapeHtml(s){
+  return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function escapeJs(s){
+  return String(s??'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+}
+
+function backupStorageSnapshot(){
+  const storage={};
+  for(let i=0;i<localStorage.length;i++){
+    const k=localStorage.key(i);
+    if(k && k.startsWith('minhas_financas_')) storage[k]=localStorage.getItem(k);
+  }
+  storage[KEY]=JSON.stringify(expenses||[]);
+  return storage;
+}
+function exportBackup(){
+  try{
+    const payload={
+      app:'Minhas Finanças',
+      backupVersion:1,
+      appVersion:'5.2',
+      createdAt:new Date().toISOString(),
+      storage:backupStorageSnapshot()
+    };
+    const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json;charset=utf-8'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    const d=new Date();
+    const stamp=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    a.href=url;
+    a.download=`minhas_financas_backup_${stamp}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+    alert('Backup criado com sucesso. Guarde o arquivo em um local seguro.');
+  }catch(err){
+    alert('Não foi possível criar o backup neste aparelho.');
+  }
+}
+function importBackup(ev){
+  const file=ev.target.files?.[0];
+  ev.target.value='';
+  if(!file) return;
+  const reader=new FileReader();
+  reader.onload=()=>{
+    try{
+      const payload=JSON.parse(reader.result);
+      const storage=payload?.storage;
+      if(!payload || payload.app!=='Minhas Finanças' || payload.backupVersion!==1 || !storage || typeof storage!=='object'){
+        throw new Error('Formato inválido');
+      }
+      const raw=storage[KEY];
+      const restored=JSON.parse(raw);
+      if(!Array.isArray(restored)) throw new Error('Dados inválidos');
+      const count=restored.length;
+      if(!confirm(`Restaurar este backup?\n\n${count} lançamento(s) serão restaurados.\nOs dados atuais deste aplicativo serão substituídos.`)) return;
+      // Remove somente as chaves do aplicativo e repõe exatamente o snapshot do backup.
+      const keys=[];
+      for(let i=0;i<localStorage.length;i++){
+        const k=localStorage.key(i);
+        if(k && k.startsWith('minhas_financas_')) keys.push(k);
+      }
+      keys.forEach(k=>localStorage.removeItem(k));
+      Object.entries(storage).forEach(([k,v])=>{
+        if(k.startsWith('minhas_financas_') && typeof v==='string') localStorage.setItem(k,v);
+      });
+      alert('Backup restaurado com sucesso. O aplicativo será recarregado.');
+      location.reload();
+    }catch(err){
+      alert('Este arquivo não parece ser um backup válido do Minhas Finanças.');
+    }
+  };
+  reader.onerror=()=>alert('Não foi possível ler o arquivo de backup.');
+  reader.readAsText(file);
+}
+
+function togglePaid(id){
+ expenses=expenses.map(e=>e.id===id?{...e,status:e.status==='paid'?'pending':'paid',paidDate:e.status==='pending'?isoDate(new Date()):''}:e);
+ save();render();
+}
+
+function removeCellular310Once(){
+  const marker='minhas_financas_remove_celular_310_v52';
+  if(localStorage.getItem(marker)==='1') return;
+  const before=expenses.length;
+  expenses=expenses.filter(e=>{
+    const d=String(e?.desc||'').trim().toLowerCase();
+    return d!=='celular 3/10';
+  });
+  if(expenses.length!==before) save();
+  localStorage.setItem(marker,'1');
+}
+
+function selectFirstMonthWithPendingOnStartup(){
+  const select=document.getElementById('monthSelect');
+  if(!select || !select.options.length) return;
+  const fixed=getFixedMonthSettings();
+  if(fixed.enabled && /^\d{4}-\d{2}$/.test(fixed.month||'')){
+    ensureMonthlyForMonth(fixed.month);
+    if([...select.options].some(o=>o.value===fixed.month)) select.value=fixed.month;
+    return;
+  }
+
+  const current=`${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}`;
+  let startIndex=0;
+
+  for(let i=0;i<select.options.length;i++){
+    if(select.options[i].value===current){ startIndex=i; break; }
+  }
+
+  // Procura, a partir do mês atual, o primeiro mês que ainda tenha
+  // pelo menos uma conta "A pagar". Se o mês atual estiver totalmente pago,
+  // avança automaticamente para o próximo mês com pendências.
+  for(let i=startIndex;i<select.options.length;i++){
+    const ym=select.options[i].value;
+    ensureMonthlyForMonth(ym);
+    const monthExpenses=expenses.filter(e=>e.due?.startsWith(ym));
+    const hasPending=monthExpenses.some(e=>e.status!=='paid' && effectiveValue(e)>0);
+    if(hasPending){
+      select.selectedIndex=i;
+      return;
+    }
+  }
+
+  // Se não houver nenhuma pendência nos meses futuros disponíveis,
+  // mantém o mês atual.
+  select.selectedIndex=startIndex;
+}
+
+try{
+  const savedRaw=localStorage.getItem(KEY);
+  const status=document.getElementById('saveStatus');
+  if(status) status.textContent=savedRaw!==null?'✅ Dados locais encontrados. Salvamento automático ativado.':'ℹ️ Primeiro uso neste navegador: os lançamentos serão salvos aqui.';
+}catch(e){
+  const status=document.getElementById('saveStatus');
+  if(status) status.textContent='⚠️ Armazenamento local bloqueado neste modo de abertura. Use o backup com frequência.';
+}
+seed(); cleanupLegacyFixedData(); removeGhostGeneralExpense(); removeCellular310Once(); removeDuplicateExpenses(); migrateSampleToOctober(); migrateToMonthly(); setupMonths(); bindFixedMonthControls();
+const startupFixed=getFixedMonthSettings();
+if(startupFixed.enabled && /^\d{4}-\d{2}$/.test(startupFixed.month||'')){
+  const monthSelect=document.getElementById('monthSelect');
+  if(![...monthSelect.options].some(o=>o.value===startupFixed.month)){const opt=document.createElement('option');opt.value=startupFixed.month;opt.textContent=startupFixed.month;monthSelect.appendChild(opt);}
+  monthSelect.value=startupFixed.month;
+}
+document.getElementById('monthSelect').addEventListener('change', ()=>{ render(); });
+normalizeMonthlyData();
+removeGhostGeneralExpense();
+cleanupDuplicatePiaRico();
+ensureFutureEmptyCards();
+resetFutureCardsOnce();
+if(!(getFixedMonthSettings().enabled && /^\d{4}-\d{2}$/.test(getFixedMonthSettings().month||''))) selectFirstMonthWithPendingOnStartup();
+render();
+</script>
+<script id="voice-expense-script">
+(function(){
+  window.voiceRecognition=null;
+  window.voiceListening=false;
+})();
+
+function voiceSetStatus(msg,show=true){
+  const box=document.getElementById('voiceStatus');
+  if(!box)return;
+  box.textContent=msg||'';
+  box.classList.toggle('show',!!show);
+}
+
+function voiceMoney(text){
+  const t=String(text||'').toLowerCase().replace(/\s+/g,' ');
+  let m=t.match(/(?:r\$|reais?|real)\s*(\d{1,3}(?:\.\d{3})*(?:,\d{1,2})?|\d+(?:,\d{1,2})?)/i);
+  if(!m) m=t.match(/(\d{1,3}(?:\.\d{3})*,\d{1,2}|\d+(?:,\d{1,2}))\s*(?:reais?|r\$)/i);
+  if(!m) return null;
+  const raw=m[1].replace(/\./g,'').replace(',','.');
+  const n=Number(raw);
+  return Number.isFinite(n)&&n>0?n:null;
+}
+function voiceDate(text){
+  const now=new Date();
+  const t=String(text||'').toLowerCase();
+  if(/ontem/.test(t)) now.setDate(now.getDate()-1);
+  else if(/anteontem/.test(t)) now.setDate(now.getDate()-2);
+  const m=t.match(/\b(\d{1,2})[\/-](\d{1,2})(?:[\/-](\d{2,4}))?\b/);
+  if(m){
+    let y=m[3]?Number(m[3]):now.getFullYear(); if(y<100)y+=2000;
+    const d=new Date(y,Number(m[2])-1,Number(m[1]));
+    if(!Number.isNaN(d.getTime())) return d.toISOString().slice(0,10);
+  }
+  return now.toISOString().slice(0,10);
+}
+function voiceAccount(text){
+  const t=String(text||'').toLowerCase();
+  if(/\brico\b/.test(t)) return 'Rico';
+  if(/mercado\s*pago|\bmp\b/.test(t)) return 'Mercado Pago';
+  return '';
+}
+function voiceMethod(text){
+  const t=String(text||'').toLowerCase();
+  if(/cart[aã]o(?: de)? cr[eé]dito|cr[eé]dito/.test(t)) return 'Cartão de crédito';
+  if(/pix/.test(t)) return 'Pix';
+  if(/d[eé]bito/.test(t)) return 'Débito';
+  if(/dinheiro/.test(t)) return 'Dinheiro';
+  if(/boleto/.test(t)) return 'Boleto';
+  return 'Cartão de crédito';
+}
+function voiceCategory(text){
+  const t=String(text||'').toLowerCase();
+  if(/supermercado|mercado|feira|alimenta/.test(t)) return 'Alimentação';
+  if(/gasolina|combust[ií]vel|posto/.test(t)) return 'Combustível';
+  if(/farm[aá]cia|rem[eé]dio|m[eé]dico|sa[uú]de/.test(t)) return 'Saúde';
+  if(/academia|treino/.test(t)) return 'Academia';
+  if(/celular|telefone/.test(t)) return 'Telefone';
+  if(/internet/.test(t)) return 'Internet';
+  return 'Outros';
+}
+function voiceDescription(text){
+  let t=String(text||'').trim();
+  t=t.replace(/^(acrescente|adiciona|adicione|lan[cç]a|lan[cç]ar|registre|registrar|crie|inclua|incluir)\s+(uma\s+)?(despesa|gasto)\s*/i,'');
+  t=t.replace(/\b(?:no|na|em|com)\s+cart[aã]o(?:\s+de)?\s+(?:cr[eé]dito\s+)?(?:rico|mercado\s+pago|mp)\b.*$/i,'');
+  t=t.replace(/\b(?:cart[aã]o(?:\s+de)?\s+cr[eé]dito|cr[eé]dito|pix|d[eé]bito|dinheiro|boleto)\b/gi,' ');
+  t=t.replace(/\b(?:hoje|ontem|anteontem|agora)\b/gi,' ');
+  t=t.replace(/\b(?:data|valor|de hoje|para hoje|no dia)\b/gi,' ');
+  t=t.replace(/(?:r\$\s*)?\d{1,3}(?:\.\d{3})*(?:,\d{1,2})?\s*(?:reais?|real)?/gi,' ');
+  t=t.replace(/\s+/g,' ').replace(/^[,;:\- ]+|[,;:\- ]+$/g,'').trim();
+  return t || 'Despesa';
+}
+function voiceFindCard(account,ym){
+  const a=String(account||'').toLowerCase();
+  return expenses.find(e=>e.method==='Cartão de crédito'&&!e.cardPurchase&&String(e.account||'').toLowerCase()===a&&String(e.due||'').startsWith(ym)) ||
+         expenses.find(e=>e.method==='Cartão de crédito'&&!e.cardPurchase&&String(e.account||'').toLowerCase()===a);
+}
+function processVoiceExpense(text){
+  const value=voiceMoney(text);
+  if(!value){
+    voiceSetStatus('Não consegui identificar o valor. Tente: “supermercado 35 reais no cartão Rico”.');
+    alert('Não consegui identificar o valor da despesa.');
+    return;
+  }
+  const date=voiceDate(text);
+  const ym=date.slice(0,7);
+  const account=voiceAccount(text);
+  const method=voiceMethod(text);
+  const category=voiceCategory(text);
+  const desc=voiceDescription(text);
+  if(method==='Cartão de crédito' && account){
+    const card=voiceFindCard(account,ym);
+    if(card){
+      openModal(card.id);
+      setTimeout(()=>{
+        addCardItem({desc,value,category,date,installments:1});
+        updateCardManagerSummary();
+        voiceSetStatus(`🎙️ Ouvi: “${text}”
+
+Preparei ${money(value)} em ${desc} no cartão ${account}. Confira e toque em “Salvar gasto”.`);
+      },80);
+      return;
+    }
+  }
+  openModal();
+  document.getElementById('desc').value=desc;
+  document.getElementById('value').value=value.toFixed(2);
+  document.getElementById('due').value=date;
+  document.getElementById('category').value=category;
+  document.getElementById('method').value=method;
+  document.getElementById('account').value=account;
+  voiceSetStatus(`🎙️ Ouvi: “${text}”
+
+Preenchi ${desc}, ${money(value)}, ${method}${account?' • '+account:''}. Confira e salve.`);
+}
+function openVoiceFallback(prefill=''){
+  const back=document.getElementById('voiceFallbackBack');
+  const input=document.getElementById('voiceTextInput');
+  if(!back||!input)return;
+  back.classList.add('show');
+  input.value=prefill||'';
+  setTimeout(()=>{input.focus(); input.setSelectionRange(input.value.length,input.value.length);},120);
+}
+function closeVoiceFallback(){
+  const back=document.getElementById('voiceFallbackBack');
+  if(back)back.classList.remove('show');
+}
+function interpretVoiceText(){
+  const input=document.getElementById('voiceTextInput');
+  const text=String(input?.value||'').trim();
+  if(!text){
+    if(input)input.focus();
+    voiceSetStatus('Digite ou dite uma frase, por exemplo: “supermercado 35 reais no cartão Rico”.');
+    return;
+  }
+  closeVoiceFallback();
+  processVoiceExpense(text);
+}
+function startVoiceExpense(){
+  const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SpeechRecognition){
+    voiceSetStatus('🎙️ O microfone do navegador não está disponível. Abrindo a opção de ditado pelo teclado.');
+    openVoiceFallback();
+    return;
+  }
+  if(window.voiceListening && window.voiceRecognition){ window.voiceRecognition.stop(); return; }
+  const btn=document.getElementById('voiceAddBtn');
+  const R=new SpeechRecognition();
+  window.voiceRecognition=R; window.voiceListening=true;
+  R.lang='pt-BR'; R.interimResults=false; R.continuous=false; R.maxAlternatives=1;
+  if(btn) btn.textContent='🔴 Ouvindo... toque para parar';
+  voiceSetStatus('🎙️ Estou ouvindo... diga a despesa, o valor e, se quiser, o cartão.');
+  R.onresult=function(ev){
+    const text=ev.results?.[0]?.[0]?.transcript?.trim()||'';
+    if(text) processVoiceExpense(text); else voiceSetStatus('Não consegui entender. Tente novamente.');
+  };
+  R.onerror=function(ev){
+    let msg='Não foi possível usar o microfone.';
+    const blocked=['not-allowed','service-not-allowed','audio-capture'];
+    if(blocked.includes(ev.error)){
+      msg='O microfone do navegador foi bloqueado ou não funciona neste arquivo. Abrindo o ditado pelo teclado.';
+      voiceSetStatus('⚠️ '+msg);
+      setTimeout(()=>openVoiceFallback(),180);
+    }else if(ev.error==='no-speech'){
+      msg='Não ouvi sua fala. Você pode tentar novamente ou usar o ditado pelo teclado.';
+      voiceSetStatus('⚠️ '+msg);
+    }else{
+      voiceSetStatus('⚠️ '+msg+' Você pode usar o ditado pelo teclado.');
+      setTimeout(()=>openVoiceFallback(),180);
+    }
+  };
+  R.onend=function(){
+    window.voiceListening=false; window.voiceRecognition=null;
+    if(btn) btn.textContent='🎙️ Lançar despesa por voz';
+  };
+  try{ R.start(); }catch(e){
+    window.voiceListening=false; window.voiceRecognition=null;
+    if(btn)btn.textContent='🎙️ Lançar despesa por voz';
+    voiceSetStatus('⚠️ Não foi possível iniciar o microfone. Abrindo o ditado pelo teclado.');
+    setTimeout(()=>openVoiceFallback(),180);
+  }
+}
+</script>
+<script>
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+ window.addEventListener('load', function(){ navigator.serviceWorker.register('./service-worker.js').catch(function(e){console.warn('PWA offline indisponível',e);}); });
+}
+</script>
+</body>
+</html>

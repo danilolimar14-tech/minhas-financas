@@ -1,3 +1,4 @@
+
 {
   "name": "Minhas Finanças",
   "short_name": "Finanças",
@@ -8,7 +9,15 @@
   "background_color": "#0b1220",
   "theme_color": "#087f5b",
   "icons": [
-    {"src":"ícone-192-saquinho.png","tamanhos":"192x192","tipo":"image/png"},
-    {"src":"ícone-512-saquinho.png","tamanhos":"512x512","tipo":"image/png"}
+    {
+      "src": "./ícone-192-saquinho.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "./ícone-512-saquinho.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
   ]
 }

@@ -433,7 +433,7 @@ h1{font-size:25px;margin:0 0 4px}
     <button class="whatsapp" onclick="sendWhatsApp()">📲 WhatsApp</button>
     <button class="pdfbtn" onclick="generatePDF()">📄 PDF</button>
   </div>
-  <div id="voiceStatus" class="voice-status" aria-live="polite"></div>
+ <button type="button" id="voiceAddBtn" class="voice-add" onclick="startVoiceExpense()">🎙️ Lançar despesa por voz</button> <div id="voiceStatus" class="voice-status" aria-live="polite"></div>
   <input id="backupFile" type="file" accept="application/json,.json" style="display:none" onchange="importBackup(event)">
   <div class="card" id="backupPanel" style="margin:10px 0 14px;border:1px solid #dbeafe;background:#f8fbff">
     <div style="font-weight:850;font-size:15px">🛡️ Backup e restauração</div>

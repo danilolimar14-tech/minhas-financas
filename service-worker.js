@@ -5,8 +5,8 @@ const APP_FILES = [
   './',
   './index.html',
   './manifest.json',
-  './ícone-192-saquinho.png',
-  './ícone-512-saquinho.png'
+  './icone-192-saquinho.png',
+  './icone-512-saquinho.png'
 ];
 
 self.addEventListener('install', event => {

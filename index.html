@@ -434,6 +434,7 @@ h1{font-size:25px;margin:0 0 4px}
     <button class="pdfbtn" onclick="generatePDF()">📄 PDF</button>
   </div>
  <button type="button" id="voiceAddBtn" class="voice-add" onclick="startVoiceExpense()">🎙️ Lançar despesa por voz</button> <div id="voiceStatus" class="voice-status" aria-live="polite"></div>
+  <button type="button" class="add" style="background:#15803d;margin-top:8px" onclick="openReceiptReader()">📷 Escanear cupom fiscal</button>
   <input id="backupFile" type="file" accept="application/json,.json" style="display:none" onchange="importBackup(event)">
   <div class="card" id="backupPanel" style="margin:10px 0 14px;border:1px solid #dbeafe;background:#f8fbff">
     <div style="font-weight:850;font-size:15px">🛡️ Backup e restauração</div>

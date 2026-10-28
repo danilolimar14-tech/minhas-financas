@@ -1,5 +1,5 @@
 
-const CACHE_NAME = 'minhas-financas-pwa-v5';
+const CACHE_NAME = 'minhas-financas-pwa-v6';
 
 const APP_FILES = [
   './',

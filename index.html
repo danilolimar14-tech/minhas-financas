@@ -1537,6 +1537,21 @@ function handleReceiptQRValue(raw){
   status.textContent='QR Code reconhecido!';
   result.innerHTML='<div style="font-weight:800;color:#166534;margin-bottom:6px">Endereço encontrado</div><div class="small" style="margin-bottom:8px">Abra a consulta fiscal. Se o site mostrar a nota, confira os dados; a importação automática de produtos depende do portal da SEFAZ.</div><a href="'+esc(url)+'" target="_blank" rel="noopener noreferrer" style="display:block;text-align:center;background:#15803d;color:white;padding:11px;border-radius:10px;text-decoration:none;font-weight:800">Abrir consulta da nota fiscal ↗</a><div class="small" style="margin-top:8px;overflow-wrap:anywhere">'+esc(url)+'</div>'+(chave?'<div class="small" style="margin-top:8px">Chave de acesso: '+esc(chave)+'</div>':'');
   document.getElementById('receiptProgress').textContent='Endereço do QR Code reconhecido. Abra a consulta para conferir os dados da nota.';
+     const cadastrarBtn = document.createElement('button');
+  cadastrarBtn.type = 'button';
+  cadastrarBtn.className = 'add';
+  cadastrarBtn.style.cssText = 'width:100%;margin-top:10px;background:#15803d';
+  cadastrarBtn.textContent = '🧾 Deseja cadastrar esta despesa?';
+  cadastrarBtn.onclick = () => {
+    if (!confirm('Deseja cadastrar uma despesa a partir deste QR Code?')) return;
+    document.getElementById('receiptProgress').textContent = 'Confira os dados da compra antes de salvar.';
+    document.getElementById('receiptQRResult').style.display = 'none';
+    document.getElementById('receiptReview').style.display = 'block';
+    document.getElementById('receiptStore').value = 'Compra por cupom fiscal';
+    document.getElementById('receiptDate').value = isoDate(new Date());
+    document.getElementById('receiptTotal').focus();
+  };
+  result.appendChild(cadastrarBtn);
  }else{
   status.textContent=chave?'A chave da nota foi identificada, mas não veio um endereço de consulta junto.':'O conteúdo foi lido, mas não contém um link reconhecível. Você pode abrir o link pela câmera do celular e colá-lo aqui.';
   result.innerHTML='<div class="small" style="margin-bottom:6px">Conteúdo lido (pode copiar e compartilhar):</div><textarea id="receiptQRRawText" readonly rows="4" style="width:100%;box-sizing:border-box;margin-top:6px">'+esc(cleaned)+'</textarea><button type="button" class="cancel" style="margin-top:6px" onclick="copyReceiptQRRaw()">Copiar conteúdo</button>'+(chave?'<div class="small" style="margin-top:8px">Chave de acesso: '+esc(chave)+'</div>':'');

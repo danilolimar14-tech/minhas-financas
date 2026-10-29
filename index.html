@@ -1522,40 +1522,150 @@ function processReceiptQRManual(){
  if(!raw){document.getElementById('receiptQRStatus').textContent='Cole primeiro o link ou o conteúdo que apareceu ao ler o QR Code com a câmera do celular.';return;}
  handleReceiptQRValue(raw);
 }
-function handleReceiptQRValue(raw){
- stopReceiptQRScanner();const status=document.getElementById('receiptQRStatus'),result=document.getElementById('receiptQRResult');
- let cleaned=String(raw||'').trim().replace(/^['"]|['"]$/g,'');
- try{cleaned=decodeURIComponent(cleaned.replace(/\+/g,'%20'));}catch(e){}
- let url='';
- // QR codes fiscais can contain a URL directly or a URL embedded in a longer payload.
- const candidates=[cleaned,...(cleaned.match(/https?:\/\/[^\s<>"']+/ig)||[])];
- for(let candidate of candidates){try{candidate=candidate.trim().replace(/[),.;]+$/,'');const u=new URL(candidate);if(['http:','https:'].includes(u.protocol)){url=u.href;break;}}catch(e){}}
- if(!url){const www=cleaned.match(/(?:^|\s)(www\.[^\s<>"']+)/i);if(www){try{url=new URL('https://'+www[1].replace(/[),.;]+$/,'')).href;}catch(e){}}}
- let chave='';const m=cleaned.match(/\b\d{44}\b/)||cleaned.match(/(?:chNFe|chave|chaveAcesso)[=:| ]+(\d{44})/i);if(m)chave=m[1]||m[0];
- result.style.display='block';
- if(url){
-  status.textContent='QR Code reconhecido!';
-  result.innerHTML='<div style="font-weight:800;color:#166534;margin-bottom:6px">Endereço encontrado</div><div class="small" style="margin-bottom:8px">Abra a consulta fiscal. Se o site mostrar a nota, confira os dados; a importação automática de produtos depende do portal da SEFAZ.</div><a href="'+esc(url)+'" target="_blank" rel="noopener noreferrer" style="display:block;text-align:center;background:#15803d;color:white;padding:11px;border-radius:10px;text-decoration:none;font-weight:800">Abrir consulta da nota fiscal ↗</a><div class="small" style="margin-top:8px;overflow-wrap:anywhere">'+esc(url)+'</div>'+(chave?'<div class="small" style="margin-top:8px">Chave de acesso: '+esc(chave)+'</div>':'');
-  document.getElementById('receiptProgress').textContent='Endereço do QR Code reconhecido. Abra a consulta para conferir os dados da nota.';
-     const cadastrarBtn = document.createElement('button');
+ 
+function handleReceiptQRValue(raw) {
+  stopReceiptQRScanner();
+
+  const status = document.getElementById('receiptQRStatus');
+  const result = document.getElementById('receiptQRResult');
+  const progress = document.getElementById('receiptProgress');
+
+  let cleaned = String(raw || '').trim().replace(/^['"]|['"]$/g, '');
+  try {
+    cleaned = decodeURIComponent(cleaned.replace(/\+/g, '%20'));
+  } catch (e) {}
+
+  let url = '';
+  const candidates = [
+    cleaned,
+    ...(cleaned.match(/https?:\/\/[^\s<>"']+/ig) || [])
+  ];
+
+  for (let candidate of candidates) {
+    try {
+      candidate = candidate.trim().replace(/[),.;]+$/, '');
+      const u = new URL(candidate);
+      if (['http:', 'https:'].includes(u.protocol)) {
+        url = u.href;
+        break;
+      }
+    } catch (e) {}
+  }
+
+  let chave = (cleaned.match(/\b\d{44}\b/) || [])[0] || '';
+  let total = 0;
+  let dataCompra = '';
+
+  // Tenta encontrar o total nos parâmetros do QR Code.
+  if (url) {
+    try {
+      const u = new URL(url);
+      const params = u.searchParams;
+
+      const valorDireto = [
+        params.get('vNF'),
+        params.get('valorTotal'),
+        params.get('valor'),
+        params.get('total')
+      ].find(v => v && /^\d+(?:[.,]\d{1,2})?$/.test(v.trim()));
+
+      if (valorDireto) {
+        total = Number(valorDireto.replace(',', '.'));
+      }
+
+      // Alguns QR Codes fiscais trazem os dados no parâmetro "p".
+      const p = params.get('p');
+
+      if (!total && p) {
+        const partes = p.split('|');
+
+        if (
+          partes.length >= 8 &&
+          partes[1] === '2' &&
+          /^\d{2}$/.test(partes[3]) &&
+          /^\d+(?:\.\d{1,2})?$/.test(partes[4])
+        ) {
+          total = Number(partes[4]);
+
+          const chaveQR = partes[0].match(/\d{44}/);
+          if (chaveQR) chave = chaveQR[0];
+
+          if (chave.length === 44) {
+            const ano = 2000 + Number(chave.slice(2, 4));
+            const mes = chave.slice(4, 6);
+            const dia = partes[3];
+            const candidata = `${ano}-${mes}-${dia}`;
+            const d = new Date(candidata + 'T12:00:00');
+
+            if (
+              d.getFullYear() === ano &&
+              d.getMonth() + 1 === Number(mes) &&
+              d.getDate() === Number(dia)
+            ) {
+              dataCompra = candidata;
+            }
+          }
+        }
+      }
+    } catch (e) {}
+  }
+
+  result.style.display = 'block';
+
+  result.innerHTML = `
+    <div style="font-weight:800;color:#166534;margin-bottom:6px">
+      QR Code reconhecido!
+    </div>
+    <div class="small" style="margin-bottom:8px">
+      ${total > 0
+        ? 'Valor encontrado: ' + money(total)
+        : 'QR Code lido. O total ainda precisa ser identificado.'}
+    </div>
+    ${url ? `
+      <a href="${esc(url)}" target="_blank" rel="noopener noreferrer"
+         style="display:block;text-align:center;background:#15803d;color:white;padding:11px;border-radius:10px;text-decoration:none;font-weight:800">
+        Abrir consulta fiscal ↗
+      </a>` : ''}
+    ${chave ? `<div class="small" style="margin-top:8px">Chave de acesso: ${esc(chave)}</div>` : ''}
+  `;
+
+  progress.textContent = total > 0
+    ? 'Total encontrado no QR Code. Confira os dados antes de salvar.'
+    : 'QR Code reconhecido. Use a foto do cupom para tentar identificar o total automaticamente.';
+
+  const cadastrarBtn = document.createElement('button');
   cadastrarBtn.type = 'button';
   cadastrarBtn.className = 'add';
   cadastrarBtn.style.cssText = 'width:100%;margin-top:10px;background:#15803d';
-  cadastrarBtn.textContent = '🧾 Deseja cadastrar esta despesa?';
+  cadastrarBtn.textContent = '🧾 Conferir e cadastrar despesa';
+
   cadastrarBtn.onclick = () => {
-    if (!confirm('Deseja cadastrar uma despesa a partir deste QR Code?')) return;
-    document.getElementById('receiptProgress').textContent = 'Confira os dados da compra antes de salvar.';
     document.getElementById('receiptQRResult').style.display = 'none';
     document.getElementById('receiptReview').style.display = 'block';
-    document.getElementById('receiptStore').value = 'Compra por cupom fiscal';
-    document.getElementById('receiptDate').value = isoDate(new Date());
-    document.getElementById('receiptTotal').focus();
+
+    document.getElementById('receiptStore').value = '';
+    document.getElementById('receiptTotal').value =
+      total > 0 ? total.toFixed(2) : '';
+    document.getElementById('receiptDate').value =
+      dataCompra || isoDate(new Date());
+
+    document.getElementById('receiptCategory').value = 'Alimentação';
+    document.getElementById('receiptStatus').value = 'paid';
+
+    if (total > 0) {
+      progress.textContent =
+        'Confira o estabelecimento, o total e os dados do pagamento.';
+      document.getElementById('receiptStore').focus();
+    } else {
+      progress.textContent =
+        'O total não foi encontrado no QR Code. Selecione a foto do cupom para tentar preencher os dados.';
+      document.getElementById('receiptImage').click();
+    }
   };
+
   result.appendChild(cadastrarBtn);
- }else{
-  status.textContent=chave?'A chave da nota foi identificada, mas não veio um endereço de consulta junto.':'O conteúdo foi lido, mas não contém um link reconhecível. Você pode abrir o link pela câmera do celular e colá-lo aqui.';
-  result.innerHTML='<div class="small" style="margin-bottom:6px">Conteúdo lido (pode copiar e compartilhar):</div><textarea id="receiptQRRawText" readonly rows="4" style="width:100%;box-sizing:border-box;margin-top:6px">'+esc(cleaned)+'</textarea><button type="button" class="cancel" style="margin-top:6px" onclick="copyReceiptQRRaw()">Copiar conteúdo</button>'+(chave?'<div class="small" style="margin-top:8px">Chave de acesso: '+esc(chave)+'</div>':'');
- }
+}
+
 }
 function copyReceiptQRRaw(){const el=document.getElementById('receiptQRRawText');if(!el)return;el.select();try{document.execCommand('copy');document.getElementById('receiptQRStatus').textContent='Conteúdo selecionado para copiar.';}catch(e){document.getElementById('receiptQRStatus').textContent='Selecione o texto e use Copiar no celular.';}}
 

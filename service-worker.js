@@ -1,5 +1,4 @@
-
-const CACHE_NAME = 'minhas-financas-pwa-v6';
+const CACHE_NAME = 'minhas-financas-pwa-v7-4';
 
 const APP_FILES = [
   './',
@@ -34,10 +33,10 @@ self.addEventListener('fetch', event => {
   event.respondWith(
     caches.match(event.request).then(cached =>
       cached || fetch(event.request).then(response => {
-        const copy = response.clone();
-        caches.open(CACHE_NAME).then(cache =>
-          cache.put(event.request, copy)
-        );
+        if (response.ok && new URL(event.request.url).origin === self.location.origin) {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
+        }
         return response;
       }).catch(() => caches.match('./index.html'))
     )
